@@ -1,12 +1,26 @@
 # 🛗 Elevator Dispatch — 3D Simulation
 
-Interactive 3D simulation of **elevator group control** for a residential building. The UI ships in **English (default) and Bulgarian** — toggle with the **EN / BG** switch in the top-right.
+Interactive 3D simulation of **elevator group control** for any building. It **starts on a configuration screen** — set the building up, then generate the simulation and its dispatch algorithm. The UI ships in **English (default) and Bulgarian** — toggle with the **EN / BG** switch in the top-right.
 
 **[▶ Live demo](https://vinbg.github.io/elevator-dispatch/)**
 
 *(Bulgarian below — [към българската версия](#-диспечер-на-асансьори--3d-симулация))*
 
-## The building
+## Configure anything
+
+The setup screen (and the **⚙ Reconfigure** button in the running view) lets you set:
+
+- **Structure** — above-ground floors, underground parking levels
+- **Occupancy** — apartments, residents (residents calibrate the traffic + "design peak")
+- **Physics** — seconds per floor, door dwell
+- **Elevators** — how many, and per-car capacity + home floor
+- **Traffic** — day profile, passenger rate (or auto = design peak), whether idle cars park
+
+Everything is remembered between visits (localStorage). The 3D scene auto-fits to whatever building you generate.
+
+## The default building
+
+The defaults reproduce the real block we started from:
 
 - **230 apartments** · ≈**460 residents**
 - **18 levels**: −1 underground parking + lobby (1) + floors 2–17
@@ -30,9 +44,10 @@ The **Naive** toggle (always the nearest car, ignoring direction/queue) is there
 - Drag to rotate, scroll to zoom
 - Manual ▲/▼ calls on every floor
 - Traffic profiles: mixed / morning / evening peak
-- Passenger-rate slider, calibrated to the building's real scale
+- Passenger-rate slider, calibrated to the configured building
 - Live log: who calls, which car is dispatched and why, wait, pickups/drop-offs
 - Metrics: average/max wait, average trip, passengers served, throughput (p/min)
+- **Fully configurable** building (see above), remembered between visits
 - **EN / BG language toggle** (English is the default)
 
 ## Tech
@@ -49,11 +64,25 @@ open index.html
 
 # 🛗 Диспечер на асансьори — 3D симулация
 
-Интерактивна 3D симулация на **групово управление на асансьори** (elevator group control) за жилищна сграда. Интерфейсът е на **английски (по подразбиране) и български** — сменя се с превключвателя **EN / BG** горе вдясно.
+Интерактивна 3D симулация на **групово управление на асансьори** (elevator group control) за произволна сграда. **Започва с екран за конфигурация** — настройвате сградата, после генерирате симулацията и нейния алгоритъм. Интерфейсът е на **английски (по подразбиране) и български** — сменя се с превключвателя **EN / BG** горе вдясно.
 
 **[▶ Демо на живо](https://vinbg.github.io/elevator-dispatch/)**
 
-## Сградата
+## Конфигурируемо е всичко
+
+Екранът за настройка (и бутонът **⚙ Преконфигурирай** в работния изглед) позволяват да зададете:
+
+- **Структура** — надземни етажи, подземни паркинг нива
+- **Обитаване** — апартаменти, живущи (живущите калибрират трафика + „проектния пик“)
+- **Физика** — секунди на етаж, престой на вратите
+- **Асансьори** — колко на брой, плюс капацитет и домашен етаж за всеки
+- **Трафик** — профил на деня, интензивност (или авто = проектен пик), паркиране на свободните кабини
+
+Всичко се помни между посещенията (localStorage). 3D сцената се побира автоматично спрямо генерираната сграда.
+
+## Сградата по подразбиране
+
+По подразбиране е реалният блок, от който тръгнахме:
 
 - **230 апартамента** · ≈**460 живущи**
 - **18 нива**: −1 подземен паркинг + партер (1) + етажи 2–17
@@ -77,9 +106,10 @@ open index.html
 - Завъртане с влачене, мащаб със скрол
 - Ръчни повиквания ▲/▼ за всеки етаж
 - Профили на трафика: смесен / сутрешен / вечерен пик
-- Регулатор на интензивността (пътници/мин), калибриран спрямо реалния мащаб
+- Регулатор на интензивността (пътници/мин), калибриран спрямо конфигурираната сграда
 - Дневник на живо: кой вика, коя кабина е изпратена и защо, чакане, качвания/слизания
 - Показатели: средно/макс. чакане, средно пътуване, обслужени пътници, пропускателна способност (п/мин)
+- **Напълно конфигурируема** сграда (виж по-горе), помни се между посещенията
 - **Превключвател EN / BG** (английският е по подразбиране)
 
 ## Технологии
