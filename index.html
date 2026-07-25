@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="bg">
+<html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Диспечер на асансьори — 3D симулация</title>
+<title>Elevator Dispatch — 3D Simulation</title>
 <style>
   :root{
     --ground:#0F141C;
@@ -29,11 +29,13 @@
   .wrap{max-width:1180px;margin:0 auto;padding:22px 20px 40px}
 
   /* ── Header ─────────────────────────────── */
-  header{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:14px}
   h1{font-size:21px;font-weight:800;letter-spacing:-.015em;margin:0}
   h1 .tag{color:var(--lantern)}
+  .hgroup{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
   .spec{color:var(--dim);font-size:13px}
   .spec b{color:var(--text);font-weight:600}
+  .langSeg button{padding:5px 12px;font-weight:700;letter-spacing:.03em}
 
   .micro{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
 
@@ -168,7 +170,7 @@
   .seg button:last-child{border-right:0}
   .seg button.on{background:rgba(255,180,84,.13);color:var(--lantern)}
   input[type=range]{width:130px;accent-color:var(--lantern)}
-  .val{font:600 12px/1 var(--mono);color:var(--text);min-width:62px;text-align:right;font-variant-numeric:tabular-nums}
+  .val{font:600 12px/1 var(--mono);color:var(--text);min-width:66px;text-align:right;font-variant-numeric:tabular-nums}
   .chk{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--dim);cursor:pointer}
   .chk input{accent-color:var(--lantern)}
   .btnrow{display:flex;gap:8px}
@@ -191,12 +193,12 @@
   .expBody p{margin:4px 0;color:#c3ccd8;font-size:13.5px}
   .expBody code{font-family:var(--mono);font-size:12px;background:var(--panel-2);padding:1px 5px;border-radius:4px}
 
-  /* captions под контролите */
+  /* captions under controls */
   .cap{margin:2px 0 4px;font-size:11.5px;line-height:1.5;color:var(--dim)}
   .cap b{color:var(--text);font-weight:600}
   .ctl .cap{margin:-4px 0 4px}
 
-  /* дневник на събитията */
+  /* event log */
   .log{max-height:200px;overflow-y:auto;font:11.5px/1.7 var(--mono);color:#aebacb}
   .log .e{display:flex;gap:10px;padding:1px 2px;border-bottom:1px solid rgba(40,52,68,.35)}
   .log .e:first-child{color:#dfe6ef}
@@ -216,8 +218,14 @@
 
 <div class="wrap">
   <header>
-    <h1>Диспечер <span class="tag">/ групово управление на асансьори</span></h1>
-    <div class="spec"><b>230 апартамента</b> · ≈<b>460 живущи</b> · 18 нива (−1 паркинг + 1–17) · кабини <b>2×8</b> + <b>2×12</b> души · <b>1.5 s</b>/етаж</div>
+    <h1 id="h1" data-th="h1"></h1>
+    <div class="hgroup">
+      <div class="spec" data-th="spec"></div>
+      <div class="seg langSeg" id="langSeg">
+        <button data-v="en" class="on">EN</button>
+        <button data-v="bg">BG</button>
+      </div>
+    </div>
   </header>
 
   <main>
@@ -225,94 +233,94 @@
       <div class="stage" id="stage">
         <div class="scene"><div class="worldZoom" id="zoomEl"><div class="world" id="world"></div></div></div>
         <div class="stageBtns">
-          <button id="rotBtn">⟳ авторотация</button>
-          <button id="pauseBtn">⏸ пауза</button>
+          <button id="rotBtn" data-t="btn_rot"></button>
+          <button id="pauseBtn"></button>
         </div>
         <div class="hud">
-          <div class="ticker" id="ticker">Симулацията върви — влачете за завъртане, колелце за мащаб.</div>
-          <div class="hint">влачене = завъртане<br>скрол = мащаб</div>
+          <div class="ticker" id="ticker"></div>
+          <div class="hint" data-th="hint"></div>
         </div>
       </div>
 
       <section class="card" style="margin-top:14px">
-        <h2>Дневник — кой вика, кой обслужва</h2>
-        <p class="cap">На живо: всяко повикване (етаж и посока), коя кабина е изпратена и защо, прехвърляния, качвания и слизания с реалното чакане.</p>
-        <div class="log" id="log"><div class="e"><span class="t">0:00</span><span>Симулацията стартира. Тук се записва всяко събитие.</span></div></div>
+        <h2 data-t="log_h2"></h2>
+        <p class="cap" data-t="log_cap"></p>
+        <div class="log" id="log"></div>
       </section>
 
       <details class="exp">
-        <summary>Как работи алгоритъмът</summary>
+        <summary data-t="exp_summary"></summary>
         <div class="expBody">
-          <h3>1 · Разпределение по цена (ETA dispatch)</h3>
-          <p>При всяко повикване системата изчислява за всяка кабина <em>колко секунди</em> ще ѝ отнеме да стигне до етажа <em>в правилната посока</em>: път × 1.5 s/етаж + ~3 s за всяко междинно спиране по маршрута + малка добавка за вече възложени повиквания (балансиране). Повикването отива при най-„евтината“ кабина. Затова кабина, слизаща от 17-и етаж, не спира навсякъде — междинните сигнали се дават на по-близки или свободни кабини.</p>
-          <h3>2 · LOOK за всяка кабина</h3>
-          <p>Кабината не сменя посоката, докато има заявки напред, и взима пътници само по посоката на движение. Това елиминира излишните обръщания и държи пътуването кратко.</p>
-          <h3>3 · Динамично преразпределение</h3>
-          <p>Докато никой не се е качил, повикването може да се прехвърли към кабина, станала междувременно по-изгодна — но само ако печалбата е ≥ 2 s (<em>хистерезис</em>, за да не „трепти“).</p>
-          <h3>4 · Паркиране по зони</h3>
-          <p>Свободните кабини се прибират на „домашни“ етажи — две на партера, една в средата (9), една горе (14) — така следващото повикване заварва кабина наблизо. Пробвайте режим <code>Наивен</code> (винаги най-близката кабина, без посока и опашка) и сравнете средното чакане.</p>
-          <h3>5 · Две малки + две големи кабини</h3>
-          <p>B и C са 12-местни, A и D — 8-местни. Запълването влиза в цената на повикването: колкото по-пълна е кабината, толкова по-„скъпа“ става тя и системата праща друга. При пиковете големите кабини естествено поемат тежкия поток от партера.</p>
-          <h3>Реалният мащаб на сградата</h3>
-          <p>230 апартамента × ≈2 души ≈ <b>460 живущи</b>. Нормата за жилищна сграда е пиково търсене 5–7 % от живущите за 5 минути → около <b>5–8 повиквания в минута</b>. Плъзгачът „Нови пътници“ е калибриран спрямо това: 3–7 е нормален ден, 8–12 е пиков час, а над 12 е стрес тест извън реалния трафик.</p>
+          <h3 data-t="exp_h1"></h3>
+          <p data-th="exp_p1"></p>
+          <h3 data-t="exp_h2"></h3>
+          <p data-th="exp_p2"></p>
+          <h3 data-t="exp_h3"></h3>
+          <p data-th="exp_p3"></p>
+          <h3 data-t="exp_h4"></h3>
+          <p data-th="exp_p4"></p>
+          <h3 data-t="exp_h5"></h3>
+          <p data-th="exp_p5"></p>
+          <h3 data-t="exp_h6"></h3>
+          <p data-th="exp_p6"></p>
         </div>
       </details>
     </div>
 
     <aside class="side">
       <section class="card">
-        <h2>Кабини</h2>
-        <p class="cap">A и D са малките (8 души), B и C — големите (12). Голямата цифра е текущият етаж; отдолу — посока и заетост.</p>
+        <h2 data-t="cars_h2"></h2>
+        <p class="cap" data-t="cars_cap"></p>
         <div class="cars" id="carChips"></div>
       </section>
 
       <section class="card">
-        <h2>Показатели</h2>
-        <p class="cap">Чакане = от натискане на бутона до качване. Пътуване = вътре в кабината. „Сега“ показва най-дълго чакащия в момента.</p>
+        <h2 data-t="stats_h2"></h2>
+        <p class="cap" data-t="stats_cap"></p>
         <div class="stats">
-          <div class="stat"><div class="v" id="sWait">—</div><div class="l">средно чакане</div></div>
-          <div class="stat"><div class="v" id="sMax">—</div><div class="l">макс. чакане сега</div></div>
-          <div class="stat"><div class="v" id="sTrip">—</div><div class="l">средно пътуване</div></div>
-          <div class="stat"><div class="v" id="sServed">0</div><div class="l">обслужени пътници</div></div>
-          <div class="stat" style="grid-column:span 2"><div class="v" id="sRate">—</div><div class="l" id="sRateL">превозени на минута</div></div>
+          <div class="stat"><div class="v" id="sWait">—</div><div class="l" data-t="stat_wait"></div></div>
+          <div class="stat"><div class="v" id="sMax">—</div><div class="l" data-t="stat_max"></div></div>
+          <div class="stat"><div class="v" id="sTrip">—</div><div class="l" data-t="stat_trip"></div></div>
+          <div class="stat"><div class="v" id="sServed">0</div><div class="l" data-t="stat_served"></div></div>
+          <div class="stat" style="grid-column:span 2"><div class="v" id="sRate">—</div><div class="l" id="sRateL"></div></div>
         </div>
       </section>
 
       <section class="card">
-        <h2>Повикване от етаж</h2>
-        <p class="cap">Натиснете ▲ или ▼ — като бутона пред асансьора у вас. Цветната точка показва коя кабина е изпратена; цифрата — колко души чакат.</p>
+        <h2 data-t="floors_h2"></h2>
+        <p class="cap" data-t="floors_cap"></p>
         <div class="floors" id="floorPanel"></div>
       </section>
 
       <section class="card ctl">
-        <h2>Настройки на симулацията</h2>
+        <h2 data-t="ctl_h2"></h2>
 
-        <div class="row"><label>Алгоритъм</label>
+        <div class="row"><label data-t="lbl_alg"></label>
           <div class="seg" id="algSeg">
-            <button data-v="smart" class="on">Оптимален (ETA)</button>
-            <button data-v="naive">Наивен</button>
+            <button data-v="smart" class="on" data-t="alg_smart"></button>
+            <button data-v="naive" data-t="alg_naive"></button>
           </div>
         </div>
-        <p class="cap">Кой асансьор поема повикването. <b>Оптимален</b>: този, който ще стигне до вас най-бързо (гледа посока, спирки, заетост). <b>Наивен</b>: просто най-близкият — включете го, за да сравните чакането.</p>
+        <p class="cap" data-th="cap_alg"></p>
 
-        <div class="row"><label>Профил на деня</label>
+        <div class="row"><label data-t="lbl_pattern"></label>
           <div class="seg" id="patSeg">
-            <button data-v="mixed" class="on">Смесен</button>
-            <button data-v="morning">Сутрин</button>
-            <button data-v="evening">Вечер</button>
+            <button data-v="mixed" class="on" data-t="pat_mixed"></button>
+            <button data-v="morning" data-t="pat_morning"></button>
+            <button data-v="evening" data-t="pat_evening"></button>
           </div>
         </div>
-        <p class="cap">Накъде пътуват хората. <b>Сутрин</b>: излизат — слизат към партера и паркинга. <b>Вечер</b>: прибират се — качват се нагоре. <b>Смесен</b>: по малко от всичко.</p>
+        <p class="cap" data-th="cap_pattern"></p>
 
-        <div class="row"><label>Нови пътници</label>
+        <div class="row"><label data-t="lbl_rate"></label>
           <span style="display:flex;align-items:center;gap:8px">
             <input type="range" id="rateSl" min="0" max="30" value="5" step="1">
-            <span class="val" id="rateV">5 п/мин</span>
+            <span class="val" id="rateV"></span>
           </span>
         </div>
         <p class="cap" id="rateHint"></p>
 
-        <div class="row"><label>Превъртане на времето</label>
+        <div class="row"><label data-t="lbl_speed"></label>
           <div class="seg" id="spdSeg">
             <button data-v="1">1×</button>
             <button data-v="2" class="on">2×</button>
@@ -320,15 +328,15 @@
             <button data-v="8">8×</button>
           </div>
         </div>
-        <p class="cap">Ускорява само часовника на симулацията — асансьорите пак се движат с реалните 1.5 s на етаж.</p>
+        <p class="cap" data-t="cap_speed"></p>
 
-        <label class="chk"><input type="checkbox" id="parkChk" checked> Паркиране на свободните кабини</label>
-        <p class="cap">Празните кабини се прибират на „домашни“ етажи — две на партера, една на 9-и, една на 14-и — за да са близо до следващото повикване.</p>
+        <label class="chk"><input type="checkbox" id="parkChk" checked> <span data-t="park_label"></span></label>
+        <p class="cap" data-t="cap_park"></p>
 
         <div class="btnrow">
-          <button class="btn warn" id="resetBtn">Нулирай статистиката</button>
+          <button class="btn warn" id="resetBtn" data-t="reset_btn"></button>
         </div>
-        <p class="cap">Занулява показателите (не мести кабините) — удобно при смяна на алгоритъм за честно сравнение.</p>
+        <p class="cap" data-t="cap_reset"></p>
       </section>
     </aside>
   </main>
@@ -336,12 +344,142 @@
 
 <script>
 'use strict';
+/* ───────────────────────── I18N ───────────────────────── */
+const I = {
+  en: {
+    title:'Elevator Dispatch — 3D Simulation',
+    h1:'Dispatch <span class="tag">/ elevator group control</span>',
+    spec:'<b>230 apartments</b> · ≈<b>460 residents</b> · 18 levels (−1 parking + 1–17) · cars <b>2×8</b> + <b>2×12</b> people · <b>1.5 s</b>/floor',
+    ticker_init:'Simulation running — drag to rotate, scroll to zoom.',
+    hint:'drag = rotate<br>scroll = zoom',
+    btn_rot:'⟳ auto-rotate', btn_pause:'⏸ pause', btn_play:'▶ start',
+    log_h2:'Log — who calls, who serves',
+    log_cap:'Live: every call (floor and direction), which car is dispatched and why, reassignments, pickups and drop-offs with real wait times.',
+    log_init:'Simulation started. Every event is recorded here.',
+    exp_summary:'How the algorithm works',
+    exp_h1:'1 · Cost-based dispatch (ETA)',
+    exp_p1:'On every call the system computes, for each car, how many <em>seconds</em> it needs to reach that floor <em>in the right direction</em>: distance × 1.5 s/floor + ~3 s for every intermediate stop on the route + a small penalty for calls already assigned to it (load balancing). The call goes to the “cheapest” car. That is why a car descending from the 17th floor does not stop everywhere — intermediate calls go to nearer or idle cars.',
+    exp_h2:'2 · LOOK per car',
+    exp_p2:'A car keeps its direction while there are requests ahead, and only picks up passengers travelling its way. This eliminates needless reversals and keeps trips short.',
+    exp_h3:'3 · Dynamic reassignment',
+    exp_p3:'As long as no one has boarded, a call can be reassigned to a car that has become more favourable — but only if the gain is ≥ 2 s (<em>hysteresis</em>, to avoid flapping).',
+    exp_h4:'4 · Zone parking',
+    exp_p4:'Idle cars return to “home” floors — two in the lobby, one in the middle (9), one up high (14) — so the next call finds a car nearby. Try the <code>Naive</code> mode (always the nearest car, ignoring direction and queue) and compare the average wait.',
+    exp_h5:'5 · Two small + two large cars',
+    exp_p5:'B and C hold 12, A and D hold 8. Occupancy enters the call cost: the fuller a car, the “more expensive” it becomes and the system sends another. At peaks the large cars naturally absorb the heavy lobby flow.',
+    exp_h6:'The building’s real scale',
+    exp_p6:'230 apartments × ≈2 people ≈ <b>460 residents</b>. The norm for a residential building is peak demand of 5–7% of residents over 5 minutes → about <b>5–8 calls per minute</b>. The “New passengers” slider is calibrated to this: 3–7 is a normal day, 8–12 is rush hour, and above 12 is a stress test beyond real traffic.',
+    cars_h2:'Cars',
+    cars_cap:'A and D are the small ones (8 people), B and C the large (12). The big number is the current floor; below it — direction and occupancy.',
+    ppl:'ppl',
+    stats_h2:'Metrics',
+    stats_cap:'Wait = from pressing the button to boarding. Trip = inside the car. “Now” shows the longest-waiting person at this moment.',
+    stat_wait:'average wait', stat_max:'max wait now', stat_trip:'average trip', stat_served:'passengers served',
+    floors_h2:'Call from floor',
+    floors_cap:'Press ▲ or ▼ — like the button by your elevator. The coloured dot shows which car is dispatched; the number — how many are waiting.',
+    call_up_title:'Call elevator up', call_dn_title:'Call elevator down',
+    ctl_h2:'Simulation settings',
+    lbl_alg:'Algorithm', alg_smart:'Optimal (ETA)', alg_naive:'Naive',
+    cap_alg:'Which elevator takes the call. <b>Optimal</b>: the one that will reach you fastest (weighs direction, stops, occupancy). <b>Naive</b>: simply the nearest — switch it on to compare the wait.',
+    lbl_pattern:'Time of day', pat_mixed:'Mixed', pat_morning:'Morning', pat_evening:'Evening',
+    cap_pattern:'Where people travel. <b>Morning</b>: leaving — down to the lobby and parking. <b>Evening</b>: coming home — up. <b>Mixed</b>: a bit of everything.',
+    lbl_rate:'New passengers',
+    lbl_speed:'Fast-forward time',
+    cap_speed:'Speeds up only the simulation clock — the elevators still move at the real 1.5 s per floor.',
+    park_label:'Park idle cars',
+    cap_park:'Empty cars return to “home” floors — two in the lobby, one on 9, one on 14 — to stay close to the next call.',
+    reset_btn:'Reset statistics',
+    cap_reset:'Zeroes the metrics (does not move the cars) — handy when switching algorithms for a fair comparison.',
+    unit_pm:'p/min',
+    rate_stop:'Stopped — passengers arrive only from the manual ▲/▼ buttons.',
+    rate_night:'Night — almost no movement.',
+    rate_normal:'Normal day for ≈460 residents.',
+    rate_peak:'Rush hour — around the building’s design maximum (≈5–8 p/min).',
+    rate_stress:'Stress test — far above the block’s real traffic.',
+    rate_hint:z=>`How many people per minute call an elevator (simulated residents). <b>${z}</b>`,
+    stat_rate_wait:'carried per minute (need ~10 s of data)',
+    stat_rate:(ph,dur)=>`carried per minute · ≈${ph} per hour · measured ${dur} min`,
+    ev_call:(fl,ar,tag,eta)=>`call from floor <b>${fl}</b> ${ar} → car ${tag} dispatched · ETA ≈${eta} s`,
+    ev_reassign:(fl,ar,from,to,g)=>`⇄ floor <b>${fl}</b> ${ar} reassigned: ${from} → ${to} (faster by ≥${g} s)`,
+    ev_full:(tag,cap,rem,fl)=>`${tag} is full (${cap}/${cap}) — ${rem} people still waiting on floor <b>${fl}</b>`,
+    ev_drop:(tag,n,fl,avg)=>`${tag} dropped ${n} ${n===1?'passenger':'passengers'} on floor <b>${fl}</b> · trip avg ${avg} s`,
+    ev_pick:(tag,n,fl,ar,avg)=>`${tag} picked up ${n} ${n===1?'passenger':'passengers'} from floor <b>${fl}</b> ${ar} · wait avg ${avg} s`,
+    ev_alg_smart:'Mode: <b>optimal</b> — the call goes to the car with the least expected time to you',
+    ev_alg_naive:'Mode: <b>naive</b> — always the nearest car, ignoring direction and occupancy',
+    ev_reset:'Statistics reset — measuring again from this moment.',
+  },
+  bg: {
+    title:'Диспечер на асансьори — 3D симулация',
+    h1:'Диспечер <span class="tag">/ групово управление на асансьори</span>',
+    spec:'<b>230 апартамента</b> · ≈<b>460 живущи</b> · 18 нива (−1 паркинг + 1–17) · кабини <b>2×8</b> + <b>2×12</b> души · <b>1.5 s</b>/етаж',
+    ticker_init:'Симулацията върви — влачете за завъртане, колелце за мащаб.',
+    hint:'влачене = завъртане<br>скрол = мащаб',
+    btn_rot:'⟳ авторотация', btn_pause:'⏸ пауза', btn_play:'▶ старт',
+    log_h2:'Дневник — кой вика, кой обслужва',
+    log_cap:'На живо: всяко повикване (етаж и посока), коя кабина е изпратена и защо, прехвърляния, качвания и слизания с реалното чакане.',
+    log_init:'Симулацията стартира. Тук се записва всяко събитие.',
+    exp_summary:'Как работи алгоритъмът',
+    exp_h1:'1 · Разпределение по цена (ETA dispatch)',
+    exp_p1:'При всяко повикване системата изчислява за всяка кабина <em>колко секунди</em> ще ѝ отнеме да стигне до етажа <em>в правилната посока</em>: път × 1.5 s/етаж + ~3 s за всяко междинно спиране по маршрута + малка добавка за вече възложени повиквания (балансиране). Повикването отива при най-„евтината“ кабина. Затова кабина, слизаща от 17-и етаж, не спира навсякъде — междинните сигнали се дават на по-близки или свободни кабини.',
+    exp_h2:'2 · LOOK за всяка кабина',
+    exp_p2:'Кабината не сменя посоката, докато има заявки напред, и взима пътници само по посоката на движение. Това елиминира излишните обръщания и държи пътуването кратко.',
+    exp_h3:'3 · Динамично преразпределение',
+    exp_p3:'Докато никой не се е качил, повикването може да се прехвърли към кабина, станала междувременно по-изгодна — но само ако печалбата е ≥ 2 s (<em>хистерезис</em>, за да не „трепти“).',
+    exp_h4:'4 · Паркиране по зони',
+    exp_p4:'Свободните кабини се прибират на „домашни“ етажи — две на партера, една в средата (9), една горе (14) — така следващото повикване заварва кабина наблизо. Пробвайте режим <code>Наивен</code> (винаги най-близката кабина, без посока и опашка) и сравнете средното чакане.',
+    exp_h5:'5 · Две малки + две големи кабини',
+    exp_p5:'B и C са 12-местни, A и D — 8-местни. Запълването влиза в цената на повикването: колкото по-пълна е кабината, толкова по-„скъпа“ става тя и системата праща друга. При пиковете големите кабини естествено поемат тежкия поток от партера.',
+    exp_h6:'Реалният мащаб на сградата',
+    exp_p6:'230 апартамента × ≈2 души ≈ <b>460 живущи</b>. Нормата за жилищна сграда е пиково търсене 5–7 % от живущите за 5 минути → около <b>5–8 повиквания в минута</b>. Плъзгачът „Нови пътници“ е калибриран спрямо това: 3–7 е нормален ден, 8–12 е пиков час, а над 12 е стрес тест извън реалния трафик.',
+    cars_h2:'Кабини',
+    cars_cap:'A и D са малките (8 души), B и C — големите (12). Голямата цифра е текущият етаж; отдолу — посока и заетост.',
+    ppl:'души',
+    stats_h2:'Показатели',
+    stats_cap:'Чакане = от натискане на бутона до качване. Пътуване = вътре в кабината. „Сега“ показва най-дълго чакащия в момента.',
+    stat_wait:'средно чакане', stat_max:'макс. чакане сега', stat_trip:'средно пътуване', stat_served:'обслужени пътници',
+    floors_h2:'Повикване от етаж',
+    floors_cap:'Натиснете ▲ или ▼ — като бутона пред асансьора у вас. Цветната точка показва коя кабина е изпратена; цифрата — колко души чакат.',
+    call_up_title:'Извикай асансьор нагоре', call_dn_title:'Извикай асансьор надолу',
+    ctl_h2:'Настройки на симулацията',
+    lbl_alg:'Алгоритъм', alg_smart:'Оптимален (ETA)', alg_naive:'Наивен',
+    cap_alg:'Кой асансьор поема повикването. <b>Оптимален</b>: този, който ще стигне до вас най-бързо (гледа посока, спирки, заетост). <b>Наивен</b>: просто най-близкият — включете го, за да сравните чакането.',
+    lbl_pattern:'Профил на деня', pat_mixed:'Смесен', pat_morning:'Сутрин', pat_evening:'Вечер',
+    cap_pattern:'Накъде пътуват хората. <b>Сутрин</b>: излизат — слизат към партера и паркинга. <b>Вечер</b>: прибират се — качват се нагоре. <b>Смесен</b>: по малко от всичко.',
+    lbl_rate:'Нови пътници',
+    lbl_speed:'Превъртане на времето',
+    cap_speed:'Ускорява само часовника на симулацията — асансьорите пак се движат с реалните 1.5 s на етаж.',
+    park_label:'Паркиране на свободните кабини',
+    cap_park:'Празните кабини се прибират на „домашни“ етажи — две на партера, една на 9-и, една на 14-и — за да са близо до следващото повикване.',
+    reset_btn:'Нулирай статистиката',
+    cap_reset:'Занулява показателите (не мести кабините) — удобно при смяна на алгоритъм за честно сравнение.',
+    unit_pm:'п/мин',
+    rate_stop:'Спряно — пътници идват само от ръчните бутони ▲/▼.',
+    rate_night:'Нощ — почти няма движение.',
+    rate_normal:'Нормален ден за ≈460 живущи.',
+    rate_peak:'Пиков час — около проектния максимум за сградата (≈5–8 п/мин).',
+    rate_stress:'Стрес тест — далеч над реалния трафик на блока.',
+    rate_hint:z=>`Колко души на минута извикват асансьор (симулирани живущи). <b>${z}</b>`,
+    stat_rate_wait:'превозени на минута (нужни са ~10 s данни)',
+    stat_rate:(ph,dur)=>`превозени на минута · ≈${ph} на час · мерено ${dur} мин`,
+    ev_call:(fl,ar,tag,eta)=>`повикване от ет. <b>${fl}</b> ${ar} → изпратена кабина ${tag} · очаквано пристигане ≈${eta} s`,
+    ev_reassign:(fl,ar,from,to,g)=>`⇄ ет. <b>${fl}</b> ${ar} се прехвърля: ${from} → ${to} (по-бърза с ≥${g} s)`,
+    ev_full:(tag,cap,rem,fl)=>`${tag} е пълна (${cap}/${cap}) — ${rem} души остават да чакат на ет. <b>${fl}</b>`,
+    ev_drop:(tag,n,fl,avg)=>`${tag} остави ${n} ${n===1?'пътник':'души'} на ет. <b>${fl}</b> · пътуване ср. ${avg} s`,
+    ev_pick:(tag,n,fl,ar,avg)=>`${tag} взе ${n} ${n===1?'пътник':'души'} от ет. <b>${fl}</b> ${ar} · чакане ср. ${avg} s`,
+    ev_alg_smart:'Режим: <b>оптимален</b> — повикването отива при кабината с най-малко очаквано време до вас',
+    ev_alg_naive:'Режим: <b>наивен</b> — винаги най-близката кабина, без да гледа посока и заетост',
+    ev_reset:'Статистиката е нулирана — мери се отначало от този момент.',
+  }
+};
+let lang = 'en';
+const t = k => I[lang][k];
+
 /* ───────────────────────── КОНСТАНТИ ───────────────────────── */
-const LEVELS = 18;                 // индекс 0 = етаж −1 (паркинг), 1..17 = етажи
+const LEVELS = 18;                 // index 0 = level −1 (parking), 1..17 = floors
 const LOBBY  = 1;
 const SEC_PER_FLOOR = 1.5;
-const DWELL = 3.0;                 // престой с отворени врати, s
-const REASSIGN_GAIN = 2.0;         // хистерезис при преразпределение, s
+const DWELL = 3.0;                 // dwell with doors open, s
+const REASSIGN_GAIN = 2.0;         // hysteresis for reassignment, s
 const FLOOR_H = 30, SHAFT_W = 46, GAP = 12, DEPTH = 48;
 const BW = 4*SHAFT_W + 5*GAP;      // 244
 const BH = LEVELS*FLOOR_H;         // 540
@@ -361,8 +499,8 @@ const cars = CARS.map((c,i)=>({
   phase: 'idle',            // idle | move | doors
   target: null, doorLeft: 0,
   parkTrip: false, noService: false, dirty: false,
-  carCalls: new Set(),      // етажи-дестинации на качените
-  pax: [],                  // качени пътници {dest,tBoard}
+  carCalls: new Set(),      // destination floors of boarded passengers
+  pax: [],                  // boarded passengers {dest,tBoard}
   el: null, chipEls: null,
 }));
 
@@ -381,7 +519,7 @@ function committedStops(car){
   return out;
 }
 
-/* LOOK: следваща цел за кабината */
+/* LOOK: next target for the car */
 function chooseTarget(car){
   const stops = committedStops(car);
   if (!stops.length) return null;
@@ -392,12 +530,10 @@ function chooseTarget(car){
   const pick = (dir)=>{
     const ahead = stops.filter(s=> dir>0 ? s.level>pos+1e-6 : s.level<pos-1e-6);
     if (!ahead.length) return null;
-    // спирки, обслужими по пътя: дестинации + повиквания в същата посока
     const inline = ahead.filter(s=> s.dir===0 || s.dir===dir);
     if (inline.length)
       return {level: dir>0 ? Math.min(...inline.map(s=>s.level))
                            : Math.max(...inline.map(s=>s.level))};
-    // само насрещни повиквания напред → до най-далечното (точка на обръщане)
     return {level: dir>0 ? Math.max(...ahead.map(s=>s.level))
                          : Math.min(...ahead.map(s=>s.level))};
   };
@@ -406,13 +542,13 @@ function chooseTarget(car){
   return pick(d0) || pick(-d0);
 }
 
-/* Оценка (сек) кабината да обслужи повикване (level, dir) — симулация на LOOK-маршрута */
+/* Estimate (s) for a car to serve a call (level, dir) — simulate its LOOK route */
 function etaOf(car, L, d){
   let pos = car.pos, dir = car.dir;
-  let t = car.phase==='doors' ? car.doorLeft : 0;
+  let t2 = car.phase==='doors' ? car.doorLeft : 0;
   const stops = committedStops(car);
-  if (algo==='naive') return Math.abs(pos-L)*SEC_PER_FLOOR;         // без посока и опашка
-  if (!stops.length) return t + Math.abs(pos-L)*SEC_PER_FLOOR;
+  if (algo==='naive') return Math.abs(pos-L)*SEC_PER_FLOOR;
+  if (!stops.length) return t2 + Math.abs(pos-L)*SEC_PER_FLOOR;
   if (dir===0) dir = Math.sign(L-pos) || 1;
 
   for (let g=0; g<8; g++){
@@ -423,30 +559,29 @@ function etaOf(car, L, d){
         if ((s.dir===0||s.dir===dir) &&
             (dir>0 ? s.level>pos+1e-6 && s.level<L-1e-6
                    : s.level<pos-1e-6 && s.level>L+1e-6)) n++;
-      return t + Math.abs(L-pos)*SEC_PER_FLOOR + n*DWELL;
+      return t2 + Math.abs(L-pos)*SEC_PER_FLOOR + n*DWELL;
     }
-    // до края на текущия ход + обръщане
     let ext = pos, n=0;
     for (const s of stops){
       const ahead = dir>0 ? s.level>pos+1e-6 : s.level<pos-1e-6;
       if (!ahead) continue;
       ext = dir>0 ? Math.max(ext,s.level) : Math.min(ext,s.level);
     }
-    if ((dir>0 && L>ext) || (dir<0 && L<ext)) ext = L;               // повикването разширява хода
+    if ((dir>0 && L>ext) || (dir<0 && L<ext)) ext = L;
     for (const s of stops)
       if ((s.dir===0||s.dir===dir) &&
           (dir>0 ? s.level>pos+1e-6 && s.level<=ext+1e-6
                  : s.level<pos-1e-6 && s.level>=ext-1e-6)) n++;
-    t += Math.abs(ext-pos)*SEC_PER_FLOOR + n*DWELL;
+    t2 += Math.abs(ext-pos)*SEC_PER_FLOOR + n*DWELL;
     pos = ext; dir = -dir;
   }
-  return t + 999;
+  return t2 + 999;
 }
 
 function costOf(car, L, d){
   let pending = 0;
   for (const h of hallCalls) if (h.assigned===car.id) pending++;
-  const fill = car.pax.length/car.cap;               // пълна кабина = „скъпа“ кабина
+  const fill = car.pax.length/car.cap;               // fuller car = "more expensive" car
   return etaOf(car, L, d) + (algo==='smart' ? 0.7*pending + 0.3*car.pax.length + 8*fill*fill : 0);
 }
 
@@ -459,7 +594,7 @@ function assign(call){
   if (call.assigned!==best){
     call.assigned = best;
     cars[best].dirty = true;
-    logEv(`повикване от ет. <b>${lbl(call.level)}</b> ${call.dir>0?'▲':'▼'} → изпратена кабина ${carTag(cars[best])} · очаквано пристигане ≈${Math.max(1,bc).toFixed(0)} s`);
+    logEv(t('ev_call')(lbl(call.level), call.dir>0?'▲':'▼', carTag(cars[best]), Math.max(1,bc).toFixed(0)));
   }
   uiFloorsDirty = true;
 }
@@ -468,7 +603,6 @@ function reassignPass(){
   if (algo!=='smart') return;
   for (const call of hallCalls){
     const cur = cars[call.assigned];
-    // не пипаме повикване, което кабината му ей-сега обслужва
     if (Math.abs(cur.pos-call.level)<0.7 &&
         (cur.dir===call.dir || cur.dir===0 || cur.phase==='doors')) continue;
     const curCost = costOf(cur, call.level, call.dir);
@@ -482,7 +616,7 @@ function reassignPass(){
       const old = call.assigned;
       call.assigned = best;
       cars[old].dirty = true; cars[best].dirty = true;
-      logEv(`⇄ ет. <b>${lbl(call.level)}</b> ${call.dir>0?'▲':'▼'} се прехвърля: ${carTag(cars[old])} → ${carTag(cars[best])} (по-бърза с ≥${REASSIGN_GAIN.toFixed(0)} s)`);
+      logEv(t('ev_reassign')(lbl(call.level), call.dir>0?'▲':'▼', carTag(cars[old]), carTag(cars[best]), REASSIGN_GAIN.toFixed(0)));
       uiFloorsDirty = true;
     }
   }
@@ -511,7 +645,6 @@ function arrive(car, level){
   car.pos = level; car.target = null;
   if (car.parkTrip || car.noService){ car.phase='idle'; car.dir=0; car.parkTrip=false; car.noService=false; return; }
 
-  // посока на тръгване след спирката
   const rest = committedStops(car).filter(s=>Math.abs(s.level-level)>1e-6);
   const above = rest.some(s=>s.level>level), below = rest.some(s=>s.level<level);
   let dep = 0;
@@ -524,7 +657,7 @@ function arrive(car, level){
     dep = here ? here.dir : 0;
   }
 
-  // слизане
+  // drop-off
   let out=0, tripSum=0;
   car.pax = car.pax.filter(p=>{
     if (p.dest===level){ const tr=simT-p.tBoard; stats.trips.push(tr); tripSum+=tr; stats.served++; out++; return false; }
@@ -532,7 +665,7 @@ function arrive(car, level){
   });
   car.carCalls.delete(level);
 
-  // качване — повиквания на този етаж по посоката на тръгване
+  // pickup — calls on this floor going in the departure direction
   let inn=0, waitSum=0;
   for (const h of hallCalls){
     if (h.level!==level) continue;
@@ -546,11 +679,11 @@ function arrive(car, level){
       inn++;
     }
     if (h.pax.length && car.pax.length>=car.cap)
-      logEv(`${carTag(car)} е пълна (${car.cap}/${car.cap}) — ${h.pax.length} души остават да чакат на ет. <b>${lbl(level)}</b>`);
+      logEv(t('ev_full')(carTag(car), car.cap, h.pax.length, lbl(level)));
   }
   hallCalls = hallCalls.filter(h=>h.pax.length>0);
-  if (out) logEv(`${carTag(car)} остави ${out} ${out===1?'пътник':'души'} на ет. <b>${lbl(level)}</b> · пътуване ср. ${(tripSum/out).toFixed(1)} s`);
-  if (inn) logEv(`${carTag(car)} взе ${inn} ${inn===1?'пътник':'души'} от ет. <b>${lbl(level)}</b> ${dep>0?'▲':dep<0?'▼':''} · чакане ср. ${(waitSum/inn).toFixed(1)} s`);
+  if (out) logEv(t('ev_drop')(carTag(car), out, lbl(level), (tripSum/out).toFixed(1)));
+  if (inn) logEv(t('ev_pick')(carTag(car), inn, lbl(level), dep>0?'▲':dep<0?'▼':'', (waitSum/inn).toFixed(1)));
 
   car.dir = dep;
   car.phase='doors'; car.doorLeft = DWELL;
@@ -570,14 +703,13 @@ function stepCar(car, dt){
       car.dirty=false;
       const tgt = chooseTarget(car);
       if (!tgt){
-        // целта е преразпределена — спираме на най-близкия етаж напред
         car.noService = true;
         car.target = Math.max(0, Math.min(LEVELS-1, car.dir>0 ? Math.ceil(car.pos+0.35) : Math.floor(car.pos-0.35)));
       } else if (tgt.level!==car.target){
         const same = Math.sign(tgt.level-car.pos)===car.dir;
         const far  = Math.abs(tgt.level-car.pos)>=0.35;
         if (same && far){ car.target = tgt.level; car.noService=false; car.parkTrip=false; }
-        else if (!same && car.parkTrip){ // прекъсваме паркирането с обръщане
+        else if (!same && car.parkTrip){
           car.target = tgt.level; car.dir = Math.sign(tgt.level-car.pos); car.parkTrip=false;
         }
       }
@@ -597,11 +729,11 @@ const ri = (a,b)=>a+Math.floor(Math.random()*(b-a+1));
 function spawnPattern(){
   let o,d;
   const r = Math.random();
-  if (pattern==='morning'){            // жилищна сграда: сутрин хората излизат → надолу
+  if (pattern==='morning'){            // residential: mornings people leave → down
     if (r<0.72){o=ri(2,17); d=Math.random()<0.78?LOBBY:0;}
     else if (r<0.84){o=LOBBY; d=ri(2,17);}
     else {o=ri(2,17); d=ri(2,17);}
-  } else if (pattern==='evening'){     // вечер се прибират → нагоре от партер/паркинг
+  } else if (pattern==='evening'){     // evenings people come home → up from lobby/parking
     if (r<0.60){o=LOBBY; d=ri(2,17);}
     else if (r<0.76){o=0; d=ri(2,17);}
     else {o=ri(2,17); d=Math.random()<0.7?LOBBY:ri(2,17);}
@@ -643,17 +775,15 @@ function obj(x,y,z,parent){
 }
 const yOfLine = L => BH/2 - L*FLOOR_H;
 const shaftX = i => -BW/2 + GAP + SHAFT_W/2 + i*(SHAFT_W+GAP);
+const lanterns = [];
 
 function buildScene(){
-  // земя
   const g = obj(0, BH/2+2, 0);
   face(g, 620, 620, 'rotateX(90deg)', 'groundP');
-  // плочи на етажите
   for (let L=0; L<=LEVELS; L++){
     const o = obj(0, yOfLine(L), 0);
     face(o, BW+34, DEPTH+30, 'rotateX(90deg)', L===LEVELS?'roof':(L===LOBBY?'slab main':'slab'));
   }
-  // шахти
   for (let i=0;i<4;i++){
     const o = obj(shaftX(i), 0, 0);
     face(o, SHAFT_W, BH, `translateZ(${DEPTH/2}px)`, 'shaftF frontF');
@@ -661,13 +791,12 @@ function buildScene(){
     face(o, DEPTH, BH, `rotateY(90deg) translateZ(${SHAFT_W/2}px)`, 'shaftF');
     face(o, DEPTH, BH, `rotateY(-90deg) translateZ(${SHAFT_W/2}px)`, 'shaftF');
   }
-  // етикети + фенери на повикванията (лява страна, предна равнина)
   lanterns.length = 0;
   for (let L=0; L<LEVELS; L++){
     const y = yOfLine(L) - FLOOR_H/2;
     const lab = obj(-BW/2-30, y, DEPTH/2+2);
-    const t = el('flabel', lab); t.textContent = lbl(L);
-    t.style.cssText+='position:absolute;left:-13px;top:-5px;';
+    const tx = el('flabel', lab); tx.textContent = lbl(L);
+    tx.style.cssText+='position:absolute;left:-13px;top:-5px;';
     const lw = obj(-BW/2-9, y, DEPTH/2+2);
     const box = el('lant', lw);
     box.style.cssText+='position:absolute;left:-7px;top:-9px;';
@@ -676,7 +805,6 @@ function buildScene(){
     box.append(up,dn);
     lanterns.push({up,dn});
   }
-  // кабини — 12-местните са видимо по-големи
   for (const car of cars){
     const big = car.cap>=12;
     const CW = big?42:34, CH = big?25:22, CD = big?44:36;
@@ -696,7 +824,6 @@ function buildScene(){
     car.el = o; car.occEl = occ; car.CH = CH;
   }
 }
-const lanterns = [];
 
 /* камера */
 let rx=-16, ry=-24, zoom=1, autorot=true;
@@ -725,11 +852,11 @@ rotBtn.onclick=()=>{autorot=!autorot;syncRot();}; syncRot();
 const chipsHost = document.getElementById('carChips');
 for (const car of cars){
   const d = document.createElement('div'); d.className='carChip';
-  d.innerHTML = `<div class="nm" style="color:${car.color}">${car.name} · ${car.cap} души</div>
+  d.innerHTML = `<div class="nm" style="color:${car.color}"></div>
     <div class="fl" style="color:${car.color}">1</div>
     <div class="st">• 0/${car.cap}</div>`;
   chipsHost.appendChild(d);
-  car.chipEls = {fl:d.querySelector('.fl'), st:d.querySelector('.st')};
+  car.chipEls = {nm:d.querySelector('.nm'), fl:d.querySelector('.fl'), st:d.querySelector('.st')};
 }
 
 const floorPanel = document.getElementById('floorPanel');
@@ -739,8 +866,8 @@ for (let L=LEVELS-1; L>=0; L--){
   r.className = 'frow'+(L===LOBBY?' lobby':'');
   const canUp = L<LEVELS-1, canDn = L>0;
   r.innerHTML = `<span class="fl">${lbl(L)}</span>
-    <button class="cbtn up" title="Извикай асансьор нагоре" ${canUp?'':'disabled style="visibility:hidden"'}>▲</button>
-    <button class="cbtn dn" title="Извикай асансьор надолу" ${canDn?'':'disabled style="visibility:hidden"'}>▼</button>
+    <button class="cbtn up" ${canUp?'':'disabled style="visibility:hidden"'}>▲</button>
+    <button class="cbtn dn" ${canDn?'':'disabled style="visibility:hidden"'}>▼</button>
     <span class="who"></span>`;
   floorPanel.appendChild(r);
   const up=r.querySelector('.up'), dn=r.querySelector('.dn'), who=r.querySelector('.who');
@@ -761,7 +888,6 @@ function refreshFloors(){
       html += `<span class="dot" style="color:${cars[c.assigned].color}"></span><span class="n">${c.pax.length}</span>`;
     f.who.innerHTML = html;
   }
-  // фенери в 3D
   for (let L=0;L<LEVELS;L++){
     const cu = hallCalls.find(h=>h.level===L&&h.dir>0);
     const cd = hallCalls.find(h=>h.level===L&&h.dir<0);
@@ -787,33 +913,30 @@ function segWire(id, cb){
     cb(b.dataset.v);
   });
 }
-segWire('algSeg', v=>{ algo=v; hallCalls.forEach(assign); logEv(v==='smart'
-  ? 'Режим: <b>оптимален</b> — повикването отива при кабината с най-малко очаквано време до вас'
-  : 'Режим: <b>наивен</b> — винаги най-близката кабина, без да гледа посока и заетост'); });
+segWire('algSeg', v=>{ algo=v; hallCalls.forEach(assign); logEv(v==='smart'? t('ev_alg_smart') : t('ev_alg_naive')); });
 segWire('patSeg', v=>pattern=v);
 segWire('spdSeg', v=>speed=+v);
+segWire('langSeg', v=>applyLang(v));
 const rateSl=document.getElementById('rateSl'), rateV=document.getElementById('rateV');
 function rateZone(){
-  if (rate===0)  return 'Спряно — пътници идват само от ръчните бутони ▲/▼.';
-  if (rate<=2)   return 'Нощ — почти няма движение.';
-  if (rate<=7)   return 'Нормален ден за ≈460 живущи.';
-  if (rate<=12)  return 'Пиков час — около проектния максимум за сградата (≈5–8 п/мин).';
-  return 'Стрес тест — далеч над реалния трафик на блока.';
+  if (rate===0)  return t('rate_stop');
+  if (rate<=2)   return t('rate_night');
+  if (rate<=7)   return t('rate_normal');
+  if (rate<=12)  return t('rate_peak');
+  return t('rate_stress');
 }
 function syncRate(){
-  rateV.textContent = rate+' п/мин';
-  document.getElementById('rateHint').innerHTML =
-    `Колко души на минута извикват асансьор (симулирани живущи). <b>${rateZone()}</b>`;
+  rateV.textContent = rate+' '+t('unit_pm');
+  document.getElementById('rateHint').innerHTML = t('rate_hint')(rateZone());
 }
 rateSl.oninput=()=>{rate=+rateSl.value; syncRate();};
-syncRate();
 document.getElementById('parkChk').onchange=e=>{parking=e.target.checked; cars.forEach(c=>c.dirty=true);};
 document.getElementById('resetBtn').onclick=()=>{
   stats.waits.length=0; stats.trips.length=0; stats.served=0; stats.t0=simT;
-  logEv('Статистиката е нулирана — мери се отначало от този момент.');
+  logEv(t('ev_reset'));
 };
 const pauseBtn=document.getElementById('pauseBtn');
-pauseBtn.onclick=()=>{paused=!paused;pauseBtn.textContent=paused?'▶ старт':'⏸ пауза';pauseBtn.classList.toggle('on',paused);};
+pauseBtn.onclick=()=>{paused=!paused;pauseBtn.textContent=paused?t('btn_play'):t('btn_pause');pauseBtn.classList.toggle('on',paused);};
 
 /* ticker + дневник */
 const tickerEl=document.getElementById('ticker');
@@ -841,32 +964,56 @@ function refreshStats(){
   const dur = simT - stats.t0;
   if (dur>10 && stats.served>0){
     const pm = stats.served/dur*60;
-    $('sRate').innerHTML = pm.toFixed(1)+'<span class="u"> п/мин</span>';
-    $('sRateL').textContent = `превозени на минута · ≈${Math.round(pm*60)} на час · мерено ${fmtT(dur)} мин`;
+    $('sRate').innerHTML = pm.toFixed(1)+`<span class="u"> ${t('unit_pm')}</span>`;
+    $('sRateL').textContent = t('stat_rate')(Math.round(pm*60), fmtT(dur));
   } else {
     $('sRate').innerHTML = '—';
-    $('sRateL').textContent = 'превозени на минута (нужни са ~10 s данни)';
+    $('sRateL').textContent = t('stat_rate_wait');
   }
   if (stats.waits.length>400) stats.waits.splice(0,200);
   if (stats.trips.length>400) stats.trips.splice(0,200);
 }
 
+/* ───────────────────────── ЕЗИК ───────────────────────── */
+function applyLang(l){
+  lang = (l==='bg') ? 'bg' : 'en';
+  document.documentElement.lang = lang;
+  document.title = t('title');
+  document.querySelectorAll('[data-t]').forEach(el=>{ el.textContent = t(el.dataset.t); });
+  document.querySelectorAll('[data-th]').forEach(el=>{ el.innerHTML = t(el.dataset.th); });
+  // language segmented control
+  document.querySelectorAll('#langSeg button').forEach(b=>b.classList.toggle('on', b.dataset.v===lang));
+  // pause button depends on state
+  pauseBtn.textContent = paused ? t('btn_play') : t('btn_pause');
+  // car chips
+  for (const car of cars) car.chipEls.nm.textContent = `${car.name} · ${car.cap} ${t('ppl')}`;
+  // floor call titles
+  for (let L=0;L<LEVELS;L++){
+    if (frows[L].up) frows[L].up.title = t('call_up_title');
+    if (frows[L].dn) frows[L].dn.title = t('call_dn_title');
+  }
+  syncRate();
+  refreshStats();
+}
+
 /* ───────────────────────── ЦИКЪЛ ───────────────────────── */
 buildScene();
-let lastT = performance.now(), acc=0, statT=0;
+applyLang('en');
+tickerEl.textContent = t('ticker_init');
+logHost.innerHTML = `<div class="e"><span class="t">0:00</span><span>${t('log_init')}</span></div>`;
+
+let lastT = performance.now(), statT=0;
 function frame(now){
   const dtReal = Math.min(0.1,(now-lastT)/1000); lastT=now;
   if (!paused){
     const dt = dtReal*speed;
     simT += dt;
-    // трафик (Поасон)
-    if (Math.random() < rate/60*dt) spawnPattern();
+    if (Math.random() < rate/60*dt) spawnPattern();   // Poisson traffic
     for (const c of cars) stepCar(c, dt);
     if (simT-lastReassign>0.8){ lastReassign=simT; reassignPass(); }
   }
   if (autorot && !drag) ry += dtReal*3.5;
 
-  // рендер
   zoomEl.style.transform = `scale(${zoom})`;
   world.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
   for (const c of cars){
