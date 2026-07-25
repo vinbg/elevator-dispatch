@@ -270,6 +270,7 @@
       <div class="fgroup wide">
         <h3 data-t="grp_elev"></h3>
         <label class="field"><span data-t="f_count"></span><input type="number" id="cfgCount" min="1" max="8" step="1"></label>
+        <p class="cap" data-t="elev_note"></p>
         <div class="elevHead"><span data-t="col_car"></span><span data-t="col_cap"></span><span data-t="col_home"></span></div>
         <div class="elevRows" id="elevRows"></div>
         <p class="cap" id="elevSummary"></p>
@@ -406,6 +407,7 @@ const I = {
     f_spf:'Seconds per floor', f_dwell:'Door dwell (s)',
     f_pattern:'Day profile', f_rate:'New passengers / min', f_park_beh:'Park idle cars at home floors',
     f_count:'Number of elevators', col_car:'Car', col_cap:'Capacity', col_home:'Home floor',
+    elev_note:'Home floor = where an idle car waits for the next call (zone parking). Spreading the home floors keeps a car near every part of the building. Ignored if “park idle cars” is off.',
     btn_start:'▶ Generate & start', btn_defaults:'Restore defaults',
     rate_auto:p=>`Auto — design peak ≈ ${p} p/min`,
     elev_summary:(n,cs,tot)=>`${n} cars · ${cs} · ${tot} seats total`,
@@ -482,6 +484,7 @@ const I = {
     f_spf:'Секунди на етаж', f_dwell:'Престой на вратите (s)',
     f_pattern:'Профил на деня', f_rate:'Нови пътници / мин', f_park_beh:'Паркиране на свободните кабини',
     f_count:'Брой асансьори', col_car:'Кабина', col_cap:'Капацитет', col_home:'Домашен етаж',
+    elev_note:'Домашен етаж = където свободната кабина чака следващото повикване (зоново паркиране). Разпределянето на домашните етажи държи по една кабина близо до всяка част от сградата. Игнорира се, ако „паркирането на свободните кабини“ е изключено.',
     btn_start:'▶ Генерирай и стартирай', btn_defaults:'Върни по подразбиране',
     rate_auto:p=>`Автоматично — проектен пик ≈ ${p} п/мин`,
     elev_summary:(n,cs,tot)=>`${n} кабини · ${cs} · ${tot} места общо`,
