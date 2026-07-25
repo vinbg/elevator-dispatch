@@ -71,6 +71,24 @@
   .btn.start:hover{filter:brightness(1.06);border-color:transparent}
   .setupActions .btn.warn{flex:1;min-width:140px}
 
+  /* tooltips */
+  .lbl,.hcell,.rowlbl{display:flex;align-items:center;gap:6px;min-width:0}
+  .chkrow{display:flex;align-items:center;gap:7px}
+  .tip{
+    display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+    width:15px;height:15px;border-radius:50%;border:1px solid var(--line);
+    color:var(--dim);font:700 10px/1 system-ui,sans-serif;font-style:normal;
+    cursor:help;user-select:none;transition:color .15s,border-color .15s;
+  }
+  .tip::before{content:'i'}
+  .tip:hover,.tip:focus-visible{color:var(--lantern);border-color:var(--lantern);outline:none}
+  #tooltip{
+    position:fixed;z-index:1000;display:none;max-width:290px;
+    background:#0b1017;border:1px solid #34424f;border-radius:8px;padding:9px 11px;
+    font:400 12px/1.5 system-ui,-apple-system,sans-serif;color:var(--text);
+    box-shadow:0 10px 30px rgba(0,0,0,.55);pointer-events:none;
+  }
+
   .micro{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
 
   /* ── 3D scene ───────────────────────────── */
@@ -236,42 +254,42 @@
     <div class="setupGrid">
       <div class="fgroup">
         <h3 data-t="grp_structure"></h3>
-        <label class="field"><span data-t="f_floors"></span><input type="number" id="cfgFloors" min="2" max="60" step="1"></label>
-        <label class="field"><span data-t="f_parking"></span><input type="number" id="cfgParking" min="0" max="6" step="1"></label>
+        <label class="field"><span class="lbl"><span data-t="f_floors"></span><i class="tip" tabindex="0" data-tip="tip_floors"></i></span><input type="number" id="cfgFloors" min="2" max="60" step="1"></label>
+        <label class="field"><span class="lbl"><span data-t="f_parking"></span><i class="tip" tabindex="0" data-tip="tip_parking"></i></span><input type="number" id="cfgParking" min="0" max="6" step="1"></label>
       </div>
 
       <div class="fgroup">
         <h3 data-t="grp_occ"></h3>
-        <label class="field"><span data-t="f_apts"></span><input type="number" id="cfgApts" min="1" max="5000" step="1"></label>
-        <label class="field"><span data-t="f_res"></span><input type="number" id="cfgRes" min="1" max="20000" step="1"></label>
+        <label class="field"><span class="lbl"><span data-t="f_apts"></span><i class="tip" tabindex="0" data-tip="tip_apts"></i></span><input type="number" id="cfgApts" min="1" max="5000" step="1"></label>
+        <label class="field"><span class="lbl"><span data-t="f_res"></span><i class="tip" tabindex="0" data-tip="tip_res"></i></span><input type="number" id="cfgRes" min="1" max="20000" step="1"></label>
         <p class="cap" data-t="f_res_note"></p>
       </div>
 
       <div class="fgroup">
         <h3 data-t="grp_phys"></h3>
-        <label class="field"><span data-t="f_spf"></span><input type="number" id="cfgSpf" min="0.3" max="6" step="0.1"></label>
-        <label class="field"><span data-t="f_dwell"></span><input type="number" id="cfgDwell" min="0.5" max="12" step="0.5"></label>
+        <label class="field"><span class="lbl"><span data-t="f_spf"></span><i class="tip" tabindex="0" data-tip="tip_spf"></i></span><input type="number" id="cfgSpf" min="0.3" max="6" step="0.1"></label>
+        <label class="field"><span class="lbl"><span data-t="f_dwell"></span><i class="tip" tabindex="0" data-tip="tip_dwell"></i></span><input type="number" id="cfgDwell" min="0.5" max="12" step="0.5"></label>
       </div>
 
       <div class="fgroup">
         <h3 data-t="grp_traffic"></h3>
-        <div class="field"><span data-t="f_pattern"></span>
+        <div class="field"><span class="lbl"><span data-t="f_pattern"></span><i class="tip" tabindex="0" data-tip="tip_pattern"></i></span>
           <div class="seg" id="cfgPatSeg">
             <button data-v="mixed" data-t="pat_mixed"></button>
             <button data-v="morning" data-t="pat_morning"></button>
             <button data-v="evening" data-t="pat_evening"></button>
           </div>
         </div>
-        <label class="chk"><input type="checkbox" id="cfgRateAuto"> <span id="rateAutoLbl"></span></label>
-        <label class="field" id="rateManualWrap"><span data-t="f_rate"></span><input type="number" id="cfgRate" min="0" max="150" step="1"></label>
-        <label class="chk"><input type="checkbox" id="cfgPark"> <span data-t="f_park_beh"></span></label>
+        <div class="chkrow"><label class="chk"><input type="checkbox" id="cfgRateAuto"> <span id="rateAutoLbl"></span></label><i class="tip" tabindex="0" data-tip="tip_rate"></i></div>
+        <label class="field" id="rateManualWrap"><span class="lbl"><span data-t="f_rate"></span></span><input type="number" id="cfgRate" min="0" max="150" step="1"></label>
+        <div class="chkrow"><label class="chk"><input type="checkbox" id="cfgPark"> <span data-t="f_park_beh"></span></label><i class="tip" tabindex="0" data-tip="tip_park"></i></div>
       </div>
 
       <div class="fgroup wide">
         <h3 data-t="grp_elev"></h3>
-        <label class="field"><span data-t="f_count"></span><input type="number" id="cfgCount" min="1" max="8" step="1"></label>
+        <label class="field"><span class="lbl"><span data-t="f_count"></span><i class="tip" tabindex="0" data-tip="tip_count"></i></span><input type="number" id="cfgCount" min="1" max="8" step="1"></label>
         <p class="cap" data-t="elev_note"></p>
-        <div class="elevHead"><span data-t="col_car"></span><span data-t="col_cap"></span><span data-t="col_home"></span></div>
+        <div class="elevHead"><span data-t="col_car"></span><span class="hcell"><span data-t="col_cap"></span><i class="tip" tabindex="0" data-tip="tip_cap"></i></span><span class="hcell"><span data-t="col_home"></span><i class="tip" tabindex="0" data-tip="tip_home"></i></span></div>
         <div class="elevRows" id="elevRows"></div>
         <p class="cap" id="elevSummary"></p>
       </div>
@@ -345,14 +363,14 @@
 
         <section class="card ctl">
           <h2 data-t="ctl_h2"></h2>
-          <div class="row"><label data-t="lbl_alg"></label>
+          <div class="row"><span class="rowlbl"><label data-t="lbl_alg"></label><i class="tip" tabindex="0" data-tip="tip_alg"></i></span>
             <div class="seg" id="algSeg">
               <button data-v="smart" class="on" data-t="alg_smart"></button>
               <button data-v="naive" data-t="alg_naive"></button>
             </div>
           </div>
           <p class="cap" data-th="cap_alg"></p>
-          <div class="row"><label data-t="lbl_pattern"></label>
+          <div class="row"><span class="rowlbl"><label data-t="lbl_pattern"></label><i class="tip" tabindex="0" data-tip="tip_pattern"></i></span>
             <div class="seg" id="patSeg">
               <button data-v="mixed" data-t="pat_mixed"></button>
               <button data-v="morning" data-t="pat_morning"></button>
@@ -360,14 +378,14 @@
             </div>
           </div>
           <p class="cap" data-th="cap_pattern"></p>
-          <div class="row"><label data-t="lbl_rate"></label>
+          <div class="row"><span class="rowlbl"><label data-t="lbl_rate"></label><i class="tip" tabindex="0" data-tip="tip_rate"></i></span>
             <span style="display:flex;align-items:center;gap:8px">
               <input type="range" id="rateSl" min="0" max="30" value="5" step="1">
               <span class="val" id="rateV"></span>
             </span>
           </div>
           <p class="cap" id="rateHint"></p>
-          <div class="row"><label data-t="lbl_speed"></label>
+          <div class="row"><span class="rowlbl"><label data-t="lbl_speed"></label><i class="tip" tabindex="0" data-tip="tip_speed"></i></span>
             <div class="seg" id="spdSeg">
               <button data-v="1">1×</button>
               <button data-v="2" class="on">2×</button>
@@ -376,10 +394,11 @@
             </div>
           </div>
           <p class="cap" data-t="cap_speed"></p>
-          <label class="chk"><input type="checkbox" id="parkChk" checked> <span data-t="park_label"></span></label>
+          <div class="chkrow"><label class="chk"><input type="checkbox" id="parkChk" checked> <span data-t="park_label"></span></label><i class="tip" tabindex="0" data-tip="tip_park"></i></div>
           <p class="cap" data-t="cap_park"></p>
           <div class="btnrow">
             <button class="btn warn" id="resetBtn" data-t="reset_btn"></button>
+            <i class="tip" tabindex="0" data-tip="tip_reset" style="align-self:center"></i>
           </div>
           <p class="cap" data-t="cap_reset"></p>
         </section>
@@ -408,6 +427,21 @@ const I = {
     f_pattern:'Day profile', f_rate:'New passengers / min', f_park_beh:'Park idle cars at home floors',
     f_count:'Number of elevators', col_car:'Car', col_cap:'Capacity', col_home:'Home floor',
     elev_note:'Home floor = where an idle car waits for the next call (zone parking). Spreading the home floors keeps a car near every part of the building. Ignored if “park idle cars” is off.',
+    tip_floors:'Above-ground floors, where floor 1 is the lobby. Example: 17 → floors 1 through 17.',
+    tip_parking:'Underground levels below the lobby, labelled −1, −2, … Set 0 if there is no underground parking.',
+    tip_apts:'Total apartments in the building. Shown in the summary and used to suggest a resident count (≈2 per apartment).',
+    tip_res:'People living in the building. Drives the traffic and the “design peak” — the busy-hour call rate the passenger slider is centred on (≈1.2% of residents per minute).',
+    tip_spf:'How long a car takes to pass one floor at full speed. Lower = faster elevators. Real elevators are ~1–2 s per floor.',
+    tip_dwell:'How long the doors stay open at each stop for people to get on and off.',
+    tip_pattern:'Which way people tend to travel. Morning = leaving (down to lobby/parking). Evening = arriving (up). Mixed = a bit of everything.',
+    tip_rate:'How many new passengers appear per minute across the whole building. “Auto” uses the design peak computed from the resident count.',
+    tip_park:'When on, idle cars drive back to their home floors so one is always nearby. When off, a car just stops wherever it finished.',
+    tip_count:'How many elevator cars serve the building (1–8). Each car gets its own shaft in the 3D view.',
+    tip_cap:'How many people fit in this car. Fuller cars are penalised by the dispatcher, so calls spread across the cars.',
+    tip_home:'Where this car waits when idle (zone parking). Spread the home floors out to keep a car near every part of the building.',
+    tip_alg:'How each call is assigned. Optimal (ETA) sends the car that will reach you fastest, weighing direction, stops and load. Naive just sends the nearest — turn it on to watch waits get worse.',
+    tip_speed:'Fast-forwards the simulation clock only. The elevators still move at the configured seconds per floor.',
+    tip_reset:'Clears the metric counters (not the cars) so you can compare algorithms from a clean start.',
     btn_start:'▶ Generate & start', btn_defaults:'Restore defaults',
     rate_auto:p=>`Auto — design peak ≈ ${p} p/min`,
     elev_summary:(n,cs,tot)=>`${n} cars · ${cs} · ${tot} seats total`,
@@ -485,6 +519,21 @@ const I = {
     f_pattern:'Профил на деня', f_rate:'Нови пътници / мин', f_park_beh:'Паркиране на свободните кабини',
     f_count:'Брой асансьори', col_car:'Кабина', col_cap:'Капацитет', col_home:'Домашен етаж',
     elev_note:'Домашен етаж = където свободната кабина чака следващото повикване (зоново паркиране). Разпределянето на домашните етажи държи по една кабина близо до всяка част от сградата. Игнорира се, ако „паркирането на свободните кабини“ е изключено.',
+    tip_floors:'Надземни етажи, като етаж 1 е партерът. Пример: 17 → етажи от 1 до 17.',
+    tip_parking:'Подземни нива под партера, обозначени −1, −2, … Сложете 0, ако няма подземен паркинг.',
+    tip_apts:'Общ брой апартаменти в сградата. Показва се в обобщението и служи да предложи брой живущи (≈2 на апартамент).',
+    tip_res:'Хора, живеещи в сградата. Определя трафика и „проектния пик“ — интензивността на повикванията в пиков час, около която е центриран плъзгачът (≈1.2% от живущите на минута).',
+    tip_spf:'Колко време кабината минава един етаж на пълна скорост. По-малко = по-бързи асансьори. Реалните са ~1–2 s на етаж.',
+    tip_dwell:'Колко време вратите стоят отворени на всяка спирка, за да се качат/слязат хора.',
+    tip_pattern:'Накъде пътуват хората. Сутрин = излизат (надолу към партер/паркинг). Вечер = прибират се (нагоре). Смесен = по малко от всичко.',
+    tip_rate:'Колко нови пътници се появяват на минута в цялата сграда. „Автоматично“ ползва проектния пик, изчислен от броя живущи.',
+    tip_park:'При включено — свободните кабини се връщат на домашните си етажи, за да е винаги някоя наблизо. При изключено — кабината спира там, където е приключила.',
+    tip_count:'Колко асансьорни кабини обслужват сградата (1–8). Всяка кабина има отделна шахта в 3D изгледа.',
+    tip_cap:'Колко души побира тази кабина. По-пълните кабини се наказват от диспечера, така че повикванията се разпределят между кабините.',
+    tip_home:'Където тази кабина чака, когато е свободна (зоново паркиране). Разпределете домашните етажи, за да е винаги някоя кабина наблизо.',
+    tip_alg:'Как се възлага всяко повикване. Оптимален (ETA) праща кабината, която ще стигне най-бързо — гледа посока, спирки и заетост. Наивен праща най-близката — включете го, за да видите как чакането се влошава.',
+    tip_speed:'Ускорява само часовника на симулацията. Асансьорите пак се движат със зададените секунди на етаж.',
+    tip_reset:'Изчиства броячите на показателите (не кабините), за да сравнявате алгоритми от чист старт.',
     btn_start:'▶ Генерирай и стартирай', btn_defaults:'Върни по подразбиране',
     rate_auto:p=>`Автоматично — проектен пик ≈ ${p} п/мин`,
     elev_summary:(n,cs,tot)=>`${n} кабини · ${cs} · ${tot} места общо`,
@@ -1172,6 +1221,34 @@ function frame(now){
   }
   requestAnimationFrame(frame);
 }
+
+/* ═══════════════════════ TOOLTIPS ═══════════════════════ */
+const TT = document.createElement('div'); TT.id='tooltip'; document.body.appendChild(TT);
+let tipFor = null;
+function showTip(icon){
+  const key = icon.dataset.tip; const txt = t(key);
+  if (!txt) return;
+  tipFor = key; TT.textContent = txt; TT.style.display='block';
+  const r = icon.getBoundingClientRect();
+  const tw = TT.offsetWidth, th = TT.offsetHeight;
+  let x = r.left + r.width/2 - tw/2;
+  x = Math.max(8, Math.min(x, innerWidth - tw - 8));
+  let y = r.bottom + 8;
+  if (y + th > innerHeight - 8) y = r.top - th - 8;
+  TT.style.left = x+'px'; TT.style.top = y+'px';
+}
+function hideTip(){ TT.style.display='none'; tipFor=null; }
+document.addEventListener('pointerover', e=>{ const i=e.target.closest('.tip'); if(i) showTip(i); });
+document.addEventListener('pointerout',  e=>{ const i=e.target.closest('.tip'); if(i) hideTip(); });
+document.addEventListener('focusin',  e=>{ const i=e.target.closest('.tip'); if(i) showTip(i); });
+document.addEventListener('focusout', e=>{ const i=e.target.closest('.tip'); if(i) hideTip(); });
+document.addEventListener('click', e=>{               // tap-to-toggle on touch
+  const i=e.target.closest('.tip');
+  if(!i){ hideTip(); return; }
+  e.preventDefault();
+  if (TT.style.display==='block' && tipFor===i.dataset.tip) hideTip(); else showTip(i);
+});
+addEventListener('scroll', hideTip, true);
 
 /* ═══════════════════════ BOOT ═══════════════════════ */
 renderSetup();
