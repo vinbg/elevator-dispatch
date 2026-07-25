@@ -268,7 +268,8 @@
       <div class="fgroup">
         <h3 data-t="grp_phys"></h3>
         <label class="field"><span class="lbl"><span data-t="f_spf"></span><i class="tip" tabindex="0" data-tip="tip_spf"></i></span><input type="number" id="cfgSpf" min="0.3" max="6" step="0.1"></label>
-        <label class="field"><span class="lbl"><span data-t="f_dwell"></span><i class="tip" tabindex="0" data-tip="tip_dwell"></i></span><input type="number" id="cfgDwell" min="0.5" max="12" step="0.5"></label>
+        <label class="field"><span class="lbl"><span data-t="f_door"></span><i class="tip" tabindex="0" data-tip="tip_door"></i></span><input type="number" id="cfgDoor" min="0" max="12" step="0.5"></label>
+        <label class="field"><span class="lbl"><span data-t="f_hold"></span><i class="tip" tabindex="0" data-tip="tip_hold"></i></span><input type="number" id="cfgHold" min="0.5" max="12" step="0.5"></label>
       </div>
 
       <div class="fgroup">
@@ -287,7 +288,7 @@
 
       <div class="fgroup wide">
         <h3 data-t="grp_elev"></h3>
-        <label class="field"><span class="lbl"><span data-t="f_count"></span><i class="tip" tabindex="0" data-tip="tip_count"></i></span><input type="number" id="cfgCount" min="1" max="8" step="1"></label>
+        <label class="field"><span class="lbl"><span data-t="f_count"></span><i class="tip" tabindex="0" data-tip="tip_count"></i></span><input type="number" id="cfgCount" min="1" max="16" step="1"></label>
         <p class="cap" data-t="elev_note"></p>
         <div class="elevHead"><span data-t="col_car"></span><span class="hcell"><span data-t="col_cap"></span><i class="tip" tabindex="0" data-tip="tip_cap"></i></span><span class="hcell"><span data-t="col_home"></span><i class="tip" tabindex="0" data-tip="tip_home"></i></span></div>
         <div class="elevRows" id="elevRows"></div>
@@ -423,7 +424,7 @@ const I = {
     grp_structure:'Structure', grp_occ:'Occupancy', grp_phys:'Physics & timing', grp_traffic:'Traffic', grp_elev:'Elevators',
     f_floors:'Above-ground floors (floor 1 = lobby)', f_parking:'Underground parking levels',
     f_apts:'Apartments', f_res:'Residents', f_res_note:'Residents calibrate the traffic and the “design peak”.',
-    f_spf:'Seconds per floor', f_dwell:'Door dwell (s)',
+    f_spf:'Seconds per floor', f_door:'Door open + close (s)', f_hold:'Doors-open hold (s)',
     f_pattern:'Day profile', f_rate:'New passengers / min', f_park_beh:'Park idle cars at home floors',
     f_count:'Number of elevators', col_car:'Car', col_cap:'Capacity', col_home:'Home floor',
     elev_note:'Home floor = where an idle car waits for the next call (zone parking). Spreading the home floors keeps a car near every part of the building. Ignored if “park idle cars” is off.',
@@ -432,7 +433,8 @@ const I = {
     tip_apts:'Total apartments in the building. Shown in the summary and used to suggest a resident count (≈2 per apartment).',
     tip_res:'People living in the building. Drives the traffic and the “design peak” — the busy-hour call rate the passenger slider is centred on (≈1.2% of residents per minute).',
     tip_spf:'How long a car takes to pass one floor at full speed. Lower = faster elevators. Real elevators are ~1–2 s per floor.',
-    tip_dwell:'How long the doors stay open at each stop for people to get on and off.',
+    tip_door:'Total seconds the doors spend opening and then closing at each stop. E.g. 3 s to open + 3 s to close → enter 6.',
+    tip_hold:'How long the doors stay fully open at a stop for people to get on and off. Total time stopped at a floor = this + door open/close.',
     tip_pattern:'Which way people tend to travel. Morning = leaving (down to lobby/parking). Evening = arriving (up). Mixed = a bit of everything.',
     tip_rate:'How many new passengers appear per minute across the whole building. “Auto” uses the design peak computed from the resident count.',
     tip_park:'When on, idle cars drive back to their home floors so one is always nearby. When off, a car just stops wherever it finished.',
@@ -515,7 +517,7 @@ const I = {
     grp_structure:'Структура', grp_occ:'Обитаване', grp_phys:'Физика и време', grp_traffic:'Трафик', grp_elev:'Асансьори',
     f_floors:'Надземни етажи (етаж 1 = партер)', f_parking:'Подземни паркинг нива',
     f_apts:'Апартаменти', f_res:'Живущи', f_res_note:'Живущите калибрират трафика и „проектния пик“.',
-    f_spf:'Секунди на етаж', f_dwell:'Престой на вратите (s)',
+    f_spf:'Секунди на етаж', f_door:'Отваряне + затваряне на врати (s)', f_hold:'Задържане с отворени врати (s)',
     f_pattern:'Профил на деня', f_rate:'Нови пътници / мин', f_park_beh:'Паркиране на свободните кабини',
     f_count:'Брой асансьори', col_car:'Кабина', col_cap:'Капацитет', col_home:'Домашен етаж',
     elev_note:'Домашен етаж = където свободната кабина чака следващото повикване (зоново паркиране). Разпределянето на домашните етажи държи по една кабина близо до всяка част от сградата. Игнорира се, ако „паркирането на свободните кабини“ е изключено.',
@@ -524,7 +526,8 @@ const I = {
     tip_apts:'Общ брой апартаменти в сградата. Показва се в обобщението и служи да предложи брой живущи (≈2 на апартамент).',
     tip_res:'Хора, живеещи в сградата. Определя трафика и „проектния пик“ — интензивността на повикванията в пиков час, около която е центриран плъзгачът (≈1.2% от живущите на минута).',
     tip_spf:'Колко време кабината минава един етаж на пълна скорост. По-малко = по-бързи асансьори. Реалните са ~1–2 s на етаж.',
-    tip_dwell:'Колко време вратите стоят отворени на всяка спирка, за да се качат/слязат хора.',
+    tip_door:'Общо секунди за отваряне и после затваряне на вратите на всяка спирка. Напр. 3 s отваряне + 3 s затваряне → въведете 6.',
+    tip_hold:'Колко време вратите стоят напълно отворени на спирка, за да се качат/слязат хора. Общ престой на етаж = това + отваряне/затваряне.',
     tip_pattern:'Накъде пътуват хората. Сутрин = излизат (надолу към партер/паркинг). Вечер = прибират се (нагоре). Смесен = по малко от всичко.',
     tip_rate:'Колко нови пътници се появяват на минута в цялата сграда. „Автоматично“ ползва проектния пик, изчислен от броя живущи.',
     tip_park:'При включено — свободните кабини се връщат на домашните си етажи, за да е винаги някоя наблизо. При изключено — кабината спира там, където е приключила.',
@@ -600,14 +603,25 @@ const t = k => I[lang][k];
 
 /* ═══════════════════════ CONFIG ═══════════════════════ */
 const PALETTE = ['#FF6E5E','#53C7F0','#7ED491','#C792EA','#FFB454','#F06595','#63E6BE','#A0C4FF'];
+const MAX_CARS = 16;
+const carColor = i => i<PALETTE.length ? PALETTE[i] : `hsl(${Math.round((i*47)%360)} 72% 64%)`;
 const DEFAULT_CFG = {
   floorsAbove:17, parking:1, apartments:230, residents:460,
-  secPerFloor:1.5, dwell:3.0, parkingEnabled:true,
+  secPerFloor:1.5, doorTime:2.0, hold:2.0, parkingEnabled:true,
   pattern:'mixed', rateAuto:false, rate:5,
   elevators:[ {cap:8,home:1}, {cap:12,home:1}, {cap:12,home:9}, {cap:8,home:14} ],   // home = signed floor number
 };
 const clone = o => JSON.parse(JSON.stringify(o));
-function loadCfg(){ try{ const s=localStorage.getItem('elevCfg'); if(s){const c=JSON.parse(s); if(c&&c.elevators&&c.elevators.length) return c;} }catch(e){} return clone(DEFAULT_CFG); }
+function loadCfg(){
+  try{ const s=localStorage.getItem('elevCfg'); if(s){ const c=JSON.parse(s);
+    if(c&&c.elevators&&c.elevators.length){
+      const m={...clone(DEFAULT_CFG), ...c};
+      if(c.doorTime==null && c.dwell!=null){ m.doorTime=Math.max(0,c.dwell-1.5); m.hold=1.5; }  // migrate old single dwell
+      delete m.dwell;
+      return m;
+    }
+  } }catch(e){} return clone(DEFAULT_CFG);
+}
 function saveCfg(){ try{ localStorage.setItem('elevCfg', JSON.stringify(cfg)); }catch(e){} }
 let cfg = loadCfg();
 try{ const l=localStorage.getItem('elevLang'); if(l==='bg'||l==='en') lang=l; }catch(e){}
@@ -915,7 +929,7 @@ let rx=-16, ry=-24, zoom=1, autorot=true;
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 if (reduceMotion) autorot=false;
 let drag=null;
-stage.addEventListener('pointerdown', e=>{drag={x:e.clientX,y:e.clientY,rx,ry}; stage.setPointerCapture(e.pointerId);});
+stage.addEventListener('pointerdown', e=>{ if(e.target.closest('.stageBtns')) return; drag={x:e.clientX,y:e.clientY,rx,ry}; stage.setPointerCapture(e.pointerId);});
 stage.addEventListener('pointermove', e=>{ if(!drag) return; ry = drag.ry + (e.clientX-drag.x)*0.4; rx = clamp(drag.rx + (e.clientY-drag.y)*0.25,-45,4); });
 stage.addEventListener('pointerup', ()=>drag=null);
 stage.addEventListener('pointercancel', ()=>drag=null);
@@ -1103,7 +1117,7 @@ function homeOptions(sel){
 function renderElevRows(){
   elevRowsEl.innerHTML='';
   cfg.elevators.forEach((e,i)=>{
-    const col = PALETTE[i%PALETTE.length];
+    const col = carColor(i);
     const name = String.fromCharCode(65+i);
     const row = document.createElement('div'); row.className='erow';
     row.innerHTML = `<div class="tagn" style="color:${col}">${name}</div>
@@ -1125,7 +1139,8 @@ function renderSetup(){
   $('cfgApts').value=cfg.apartments;
   $('cfgRes').value=cfg.residents;
   $('cfgSpf').value=cfg.secPerFloor;
-  $('cfgDwell').value=cfg.dwell;
+  $('cfgDoor').value=cfg.doorTime;
+  $('cfgHold').value=cfg.hold;
   $('cfgCount').value=cfg.elevators.length;
   $('cfgRate').value=cfg.rate;
   $('cfgRateAuto').checked=cfg.rateAuto;
@@ -1137,8 +1152,8 @@ function renderSetup(){
   document.getElementById('spec').innerHTML = buildSpec();
 }
 function syncElevCount(n){
-  n = clamp(Math.round(n||1),1,8);
-  const spread = [1,1,9,14,5,17,3,11];
+  n = clamp(Math.round(n||1),1,MAX_CARS);
+  const spread = [1,1,9,14,5,17,3,11,7,12,2,16,4,10,6,13];
   while (cfg.elevators.length<n){ const i=cfg.elevators.length; cfg.elevators.push({cap:i%2?12:8, home:spread[i%spread.length]||1}); }
   while (cfg.elevators.length>n) cfg.elevators.pop();
 }
@@ -1148,7 +1163,8 @@ $('cfgParking').onchange=()=>{ cfg.parking=clamp(Math.round(+$('cfgParking').val
 $('cfgApts').onchange=()=>{ cfg.apartments=clamp(Math.round(+$('cfgApts').value||1),1,5000); $('cfgApts').value=cfg.apartments; document.getElementById('spec').innerHTML=buildSpec(); };
 $('cfgRes').onchange=()=>{ cfg.residents=clamp(Math.round(+$('cfgRes').value||1),1,20000); $('cfgRes').value=cfg.residents; document.getElementById('rateAutoLbl').textContent=t('rate_auto')(designPeak()); document.getElementById('spec').innerHTML=buildSpec(); };
 $('cfgSpf').onchange=()=>{ cfg.secPerFloor=clamp(+$('cfgSpf').value||1.5,0.3,6); $('cfgSpf').value=cfg.secPerFloor; document.getElementById('spec').innerHTML=buildSpec(); };
-$('cfgDwell').onchange=()=>{ cfg.dwell=clamp(+$('cfgDwell').value||3,0.5,12); $('cfgDwell').value=cfg.dwell; };
+$('cfgDoor').onchange=()=>{ cfg.doorTime=clamp(+$('cfgDoor').value||0,0,12); $('cfgDoor').value=cfg.doorTime; };
+$('cfgHold').onchange=()=>{ cfg.hold=clamp(+$('cfgHold').value||1.5,0.5,12); $('cfgHold').value=cfg.hold; };
 $('cfgCount').onchange=()=>{ syncElevCount(+$('cfgCount').value); $('cfgCount').value=cfg.elevators.length; renderElevRows(); document.getElementById('spec').innerHTML=buildSpec(); };
 $('cfgRate').onchange=()=>{ cfg.rate=clamp(Math.round(+$('cfgRate').value||0),0,150); $('cfgRate').value=cfg.rate; };
 $('cfgRateAuto').onchange=()=>{ cfg.rateAuto=$('cfgRateAuto').checked; document.getElementById('rateManualWrap').style.display=cfg.rateAuto?'none':''; };
@@ -1162,13 +1178,13 @@ function generate(){
   LEVELS = cfg.parking + cfg.floorsAbove;
   LOBBY  = cfg.parking;
   SEC_PER_FLOOR = cfg.secPerFloor;
-  DWELL = cfg.dwell;
+  DWELL = cfg.doorTime + cfg.hold;
   parking = parkingEnabled = cfg.parkingEnabled;
   pattern = cfg.pattern;
   algo = 'smart'; speed = 2; paused = false; zoom = 1;
   rate = cfg.rateAuto ? designPeak() : cfg.rate;
   cars = cfg.elevators.map((e,i)=>({
-    id:i, name:String.fromCharCode(65+i), color:PALETTE[i%PALETTE.length], cap:clamp(e.cap,2,30),
+    id:i, name:String.fromCharCode(65+i), color:carColor(i), cap:clamp(e.cap,2,30),
     park:homeIndex(e.home), pos:homeIndex(e.home), dir:0, phase:'idle', target:null, doorLeft:0,
     parkTrip:false, noService:false, dirty:false, carCalls:new Set(), pax:[], el:null, chipEls:null,
   }));
