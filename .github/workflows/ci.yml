@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - name: Eval (8 seeds)
+        run: npm run eval -- --seeds 8 --quiet --out /tmp/eval
+      - name: Leaderboard to step summary
+        if: always()
+        run: |
+          if [ -f /tmp/eval/leaderboard.md ]; then cat /tmp/eval/leaderboard.md >> "$GITHUB_STEP_SUMMARY"; fi

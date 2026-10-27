@@ -1,123 +1,98 @@
-# 🛗 Elevator Dispatch — 3D Simulation
+# 🛗 Elevator Dispatch — a self-improving 3D simulation
 
-Interactive 3D simulation of **elevator group control** for any building. It **starts on a configuration screen** — set the building up, then generate the simulation and its dispatch algorithm. The UI ships in **English (default) and Bulgarian** — toggle with the **EN / BG** switch in the top-right.
+Interactive 3D simulation of **elevator group control** — and a dispatcher that **learns** to do it better.
 
-**[▶ Live demo](https://vinbg.github.io/elevator-dispatch/)**
+One elevator is easy. Four elevators sharing 18 floors is where it gets hard: every call is a decision — *which car goes, and what does sending it cost everyone else?* This project simulates that, measures it honestly, and lets an optimiser improve the dispatch algorithm while you watch.
 
-*(Bulgarian below — [към българската версия](#-диспечер-на-асансьори--3d-симулация))*
+**[▶ Live demo](https://vinbg.github.io/elevator-dispatch/)** · UI in **English and Bulgarian** (EN / BG switch, top-right)
 
-## Configure anything
+## What it does
 
-The setup screen (and the **⚙ Reconfigure** button in the running view) lets you set:
+- **Configure any building** — floors, underground parking, residents, car count/capacities/home floors, travel and door timing, boarding time per passenger.
+- **Watch it run in 3D** — CSS 3D, no WebGL, drag to rotate, scroll to zoom, call cars from any floor, live log of every dispatch decision.
+- **Compare dispatchers** — `Naive` (nearest car) · `ETA v0` (the original hand-tuned cost function) · `Learned` (trained parameters, optionally with a neural residual).
+- **Learn live** — press *Start learning*: a Web Worker runs the same engine headless at thousands × real time on randomised traffic for *your* building, and hot-swaps the visible dispatcher whenever a candidate provably beats the current one.
 
-- **Structure** — above-ground floors, underground parking levels
-- **Occupancy** — apartments, residents (residents calibrate the traffic + "design peak")
-- **Physics** — seconds per floor, door dwell
-- **Elevators** — how many, and per-car capacity + home floor
-- **Traffic** — day profile, passenger rate (or auto = design peak), whether idle cars park
+## How it's built
 
-Everything is remembered between visits (localStorage). The 3D scene auto-fits to whatever building you generate.
+```
+src/sim/        headless deterministic engine — seeded RNG, fixed 0.1 s step, LOOK car controller, events, metrics
+src/policies/   naive · eta (parametric cost function; V0 = original constants) · nn (MLP residual) · learned
+src/traffic/    24-hour demand model, scenarios, domain randomisation
+src/eval/       benchmark suite, paired statistics, leaderboard CLI
+src/learn/      CMA-ES, evolution strategies, trainers, champion format
+src/worker/     in-browser learning worker
+src/ui/         the 3D app
+scenarios/      suite.json — benchmark buildings, traffic windows, seed splits
+results/        champion.json, nn-champion.json, leaderboard.md/json (committed)
+legacy/v0.html  the original single-file prototype (kept as the parity baseline)
+```
 
-## The default building
+TypeScript end to end: the **same engine** runs in the page, in the learning worker and in Node for training and evals, so what you watch is exactly what was trained and measured.
 
-The defaults reproduce the real block we started from:
+### Traffic model
 
-- **230 apartments** · ≈**460 residents**
-- **18 levels**: −1 underground parking + lobby (1) + floors 2–17
-- **4 cars**: 2 small (8 people) + 2 large (12 people)
-- **1.5 s** to travel between floors · ~3 s dwell with doors open
+Arrivals are a non-homogeneous Poisson process following a **24-hour demand curve** (weekday and weekend), scaled to the building's *design peak* (≈1.2 % of residents per minute). The origin/destination mix shifts through the day — mornings flow down to the lobby and parking, evenings flow up, middays are inter-floor. On top of that: per-floor populations, **groups** (1–4 people travelling together), **random surges** (guests arriving, a party leaving, deliveries) and boarding time that grows with the number of people getting on and off.
 
-## The algorithm
+### The dispatch algorithm
 
-A blend of the industry standards for group control:
+1. **ETA cost function** — on every call, each car's cost = seconds to reach the caller *in the right direction* (distance × s/floor + a dwell charge per intermediate stop) + penalties for queued calls, riders, how full it is and people waiting at its other stops. The cheapest car wins.
+2. **LOOK per car** — keep direction while there are requests ahead; only pick up passengers travelling that way.
+3. **Dynamic reassignment** with hysteresis, so calls move to a better car without flapping.
+4. **Zone parking** — idle cars return to home floors.
+5. **Capacity awareness** — a fuller car gets more expensive.
 
-1. **ETA dispatch (cost function)** — on every call the system computes, for each car, how many seconds it needs to arrive *in the right direction*: `distance × 1.5 s + ~3 s per intermediate stop + a penalty for occupancy/queue`. The "cheapest" car wins. That's why a car descending from the 17th floor **doesn't** stop at every floor — intermediate calls go to nearer/idle cars.
-2. **LOOK** per car — keeps its direction while there are requests ahead; only picks up passengers travelling its way.
-3. **Dynamic reassignment** with hysteresis (≥ 2 s) so it doesn't flap.
-4. **Zone parking** — idle cars return to home floors (2× lobby, 9, 14).
-5. **Capacity awareness** — a full car becomes "more expensive" and the system sends another.
+`ETA v0` uses the original hand-picked constants. Training turns every constant — plus the zoning and the reassignment threshold/interval — into a 9-dimensional parameter vector, learned **separately for morning, evening and off-peak** traffic. The neural stage adds a small MLP that scores each (car, call) pair from ~16 features and *adds a correction* to the tuned cost; it starts at zero, so it can only be adopted if it measurably helps.
 
-The **Naive** toggle (always the nearest car, ignoring direction/queue) is there for comparison — you can watch the average wait get worse.
+### How "better" is decided
 
-## What's in the simulation
+Every change has to win on the benchmark, not on a feeling.
 
-- Drag to rotate, scroll to zoom
-- Manual ▲/▼ calls on every floor
-- Traffic profiles: mixed / morning / evening peak
-- Passenger-rate slider, calibrated to the configured building
-- Live log: who calls, which car is dispatched and why, wait, pickups/drop-offs
-- Metrics: average/max wait, average trip, passengers served, throughput (p/min)
-- **Fully configurable** building (see above), remembered between visits
-- **EN / BG language toggle** (English is the default)
+- **Suite** — 6 buildings (from a 6-floor walk-up with 2 cars to a 40-floor tower with 8) × 5 traffic windows (weekday morning, morning rush, evening, midday, weekend) × seeds.
+- **Separate seeds** for training (random), validation (selection and promotion) and test (the leaderboard only).
+- **Score** (lower is better): `avgWait + 0.25·p95Wait + 0.15·avgTrip + 20·(share of waits > 60 s) + 0.05·energy`. People still waiting when the window closes count with their wait so far.
+- **Paired comparisons** — candidates run on identical scenarios and seeds; a new champion is promoted only if the mean score difference is negative with **95 % bootstrap confidence** and mean p95 wait doesn't get worse.
 
-## Tech
+See [`results/leaderboard.md`](results/leaderboard.md) for the full tables.
 
-Single file, no dependencies — plain HTML/CSS/JS. The 3D is CSS 3D transforms (`preserve-3d`), no WebGL. Opens directly in a browser.
+### Current results (held-out test split, 600 scenarios)
 
-## Run locally
+| dispatcher | score | avg wait | p95 wait | vs ETA v0 |
+|---|---|---|---|---|
+| Naive (nearest car) | 33.01 | 13.7 s | 57.8 s | +155 % worse |
+| ETA v0 (original constants) | 12.94 | 5.1 s | 16.6 s | — |
+| Tuned heuristic (CMA-ES, per regime) | 11.88 | 4.6 s | 14.5 s | **−8.2 %** (95 % CI −9.5 … −6.9 %) |
+| + neural residual (ES) | 11.78 | 4.5 s | 14.3 s | **−8.9 %** |
+
+The biggest gains are in morning traffic (tuned heuristic: p95 wait 22.9 → 18.9 s) and the larger buildings (tower-40: −9.5 % tuned, −11.6 % with the residual). The neural residual beats the tuned heuristic by only ~0.9 % (significant, but small), so the app's *Learned* mode uses the tuned heuristic: it's explainable, and it's cheap enough to keep fine-tuning in the browser.
+
+> **Note on the original prototype.** Extracting the engine exposed a freeze in `legacy/v0.html`. If a car stopped at a floor whose waiting call pointed the other way, or the car was full, it re-opened its doors there forever. This hit about a quarter of benchmark runs. The engine fixes it. `legacyDoorFreeze: true` reproduces it, and is used only by the exact-replay parity test, which proves the port matches the original passenger by passenger.
+
+## Commands
 
 ```bash
-open index.html
+npm install
+npm run dev          # the app at http://localhost:5173
+npm test             # engine, traffic, eval, learning and legacy-parity tests
+npm run eval         # leaderboard on the test split → results/leaderboard.{md,json}
+npm run train        # CMA-ES on the heuristic, per regime → results/champion.json (if it passes the gate)
+npm run train:nn     # evolution strategies on the NN residual → results/nn-champion.json (if it passes)
+npm run build        # static build in dist/ (deployed to GitHub Pages by .github/workflows/deploy.yml)
 ```
+
+CI (`.github/workflows/ci.yml`) runs typecheck, tests and a reduced eval on every PR, and posts the leaderboard in the job summary.
 
 ---
 
-# 🛗 Диспечер на асансьори — 3D симулация
+# 🛗 Диспечер на асансьори — самообучаваща се 3D симулация
 
-Интерактивна 3D симулация на **групово управление на асансьори** (elevator group control) за произволна сграда. **Започва с екран за конфигурация** — настройвате сградата, после генерирате симулацията и нейния алгоритъм. Интерфейсът е на **английски (по подразбиране) и български** — сменя се с превключвателя **EN / BG** горе вдясно.
+Интерактивна 3D симулация на **групово управление на асансьори** — и диспечер, който **се учи** да го прави по-добре.
 
-**[▶ Демо на живо](https://vinbg.github.io/elevator-dispatch/)**
+Един асансьор е лесно. Четири асансьора за 18 етажа са трудната част: всяко повикване е решение — *коя кабина да тръгне и какво струва това на всички останали?*
 
-## Конфигурируемо е всичко
+- **Конфигурирайте всяка сграда** — етажи, подземен паркинг, живущи, брой/капацитет/домашен етаж на кабините, време за път и врати, време за качване на пътник.
+- **Гледайте в 3D** и сравнявайте: `Наивен` (най-близката кабина) · `ETA v0` (оригиналната ръчно настроена функция) · `Научен` (обучени параметри, по избор с невронна корекция).
+- **Учене на живо** — *Започни обучение*: Web Worker пуска същия енджин без визуализация хиляди пъти по-бързо върху случаен трафик за *вашата* сграда и подменя диспечера, щом кандидат доказано е по-добър.
+- **Честна оценка** — 6 сгради × 5 времеви прозореца × отделни seed-ове за обучение, валидация и тест; сдвоени сравнения с 95 % bootstrap доверителен интервал.
 
-Екранът за настройка (и бутонът **⚙ Преконфигурирай** в работния изглед) позволяват да зададете:
-
-- **Структура** — надземни етажи, подземни паркинг нива
-- **Обитаване** — апартаменти, живущи (живущите калибрират трафика + „проектния пик“)
-- **Физика** — секунди на етаж, престой на вратите
-- **Асансьори** — колко на брой, плюс капацитет и домашен етаж за всеки
-- **Трафик** — профил на деня, интензивност (или авто = проектен пик), паркиране на свободните кабини
-
-Всичко се помни между посещенията (localStorage). 3D сцената се побира автоматично спрямо генерираната сграда.
-
-## Сградата по подразбиране
-
-По подразбиране е реалният блок, от който тръгнахме:
-
-- **230 апартамента** · ≈**460 живущи**
-- **18 нива**: −1 подземен паркинг + партер (1) + етажи 2–17
-- **4 кабини**: 2 малки (8 души) + 2 големи (12 души)
-- **1.5 s** за минаване от етаж на етаж · ~3 s престой с отворени врати
-
-## Алгоритъмът
-
-Комбинация от индустриалните стандарти за групово управление:
-
-1. **ETA dispatch (cost-function)** — при всяко повикване се смята за коя кабина ще отнеме най-малко секунди да стигне *в правилната посока*: `път × 1.5 s + ~3 s за всяко междинно спиране + добавка за заетост/опашка`. Печели най-„евтината". Затова кабина, слизаща от 17-и, **не** спира на всеки етаж — междинните сигнали отиват при по-близки/свободни кабини.
-2. **LOOK** за всяка кабина — не сменя посока, докато има заявки напред; взима пътници само по посоката на движение.
-3. **Динамично преразпределение** с хистерезис (≥ 2 s), за да не „трепти".
-4. **Зоново паркиране** — свободните кабини се прибират на домашни етажи (2× партер, 9, 14).
-5. **Отчитане на капацитета** — пълна кабина става „по-скъпа" и системата праща друга.
-
-Превключвателят **Наивен** (винаги най-близката кабина, без посока/опашка) е за сравнение — вижда се как средното чакане се влошава.
-
-## Какво има в симулацията
-
-- Завъртане с влачене, мащаб със скрол
-- Ръчни повиквания ▲/▼ за всеки етаж
-- Профили на трафика: смесен / сутрешен / вечерен пик
-- Регулатор на интензивността (пътници/мин), калибриран спрямо конфигурираната сграда
-- Дневник на живо: кой вика, коя кабина е изпратена и защо, чакане, качвания/слизания
-- Показатели: средно/макс. чакане, средно пътуване, обслужени пътници, пропускателна способност (п/мин)
-- **Напълно конфигурируема** сграда (виж по-горе), помни се между посещенията
-- **Превключвател EN / BG** (английският е по подразбиране)
-
-## Технологии
-
-Един файл, без зависимости — чист HTML/CSS/JS. 3D-то е на CSS 3D transforms (`preserve-3d`), без WebGL. Отваря се директно в браузър.
-
-## Локално стартиране
-
-```bash
-open index.html
-```
+Технологии: TypeScript, Vite, Vitest. Един и същ енджин в браузъра, в worker-а и в Node.

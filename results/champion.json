@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "kind": "heuristic",
+  "heuristic": {
+    "morning": {
+      "wPending": 5.320939909649715,
+      "wPax": 0,
+      "wFill": 10.475346298083625,
+      "stopCost": 0.3,
+      "wWaiting": 19.437795894145594,
+      "reassignGain": 5.173708663503854,
+      "reassignEvery": 0.8255317659174013,
+      "zoning": {
+        "lobbyShare": 0.018581279364883827,
+        "spread": 0.5341467622694028
+      }
+    },
+    "evening": {
+      "wPending": 3.3020821662867164,
+      "wPax": 0.0550213370966829,
+      "wFill": 8.0473153619416,
+      "stopCost": 0.4096287727681213,
+      "wWaiting": 8.552604756065733,
+      "reassignGain": 2.6923015335832545,
+      "reassignEvery": 1.470568305592407,
+      "zoning": {
+        "lobbyShare": 0.6421144284757664,
+        "spread": 0.22929086131714047
+      }
+    },
+    "offpeak": {
+      "wPending": 5.551717456696959,
+      "wPax": 0,
+      "wFill": 3.7070140353029624,
+      "stopCost": 0.8256015851406671,
+      "wWaiting": 14.376014429098037,
+      "reassignGain": 7.692485536171665,
+      "reassignEvery": 2.1503222913200117,
+      "zoning": {
+        "lobbyShare": 0.1655367071373932,
+        "spread": 0.24376529005648587
+      }
+    }
+  },
+  "nn": null,
+  "trainedOn": "domain-randomised training scenarios · CMA-ES per regime",
+  "createdAt": "2026-10-27",
+  "validation": {
+    "score": 11.5288,
+    "baseline": 12.5953,
+    "gainPct": 8.47
+  },
+  "perRegime": {
+    "morning": {
+      "score": 14.2974,
+      "baseline": 16.3998,
+      "gainPct": 12.82
+    },
+    "evening": {
+      "score": 10.7043,
+      "baseline": 11.2076,
+      "gainPct": 4.49
+    },
+    "offpeak": {
+      "score": 9.1725,
+      "baseline": 9.4847,
+      "gainPct": 3.29
+    }
+  }
+}

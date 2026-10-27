@@ -1,0 +1,238 @@
+{
+  "buildings": {
+    "default-block": {
+      "note": "The real 230-apartment block the project started from",
+      "floorsAbove": 17,
+      "parking": 1,
+      "apartments": 230,
+      "residents": 460,
+      "secPerFloor": 1.5,
+      "doorTime": 2.0,
+      "hold": 2.0,
+      "boardTime": 0.5,
+      "elevators": [
+        {
+          "cap": 8,
+          "home": 1
+        },
+        {
+          "cap": 12,
+          "home": 1
+        },
+        {
+          "cap": 12,
+          "home": 9
+        },
+        {
+          "cap": 8,
+          "home": 14
+        }
+      ]
+    },
+    "walkup-6": {
+      "note": "Small low-rise, two small cars",
+      "floorsAbove": 6,
+      "parking": 0,
+      "apartments": 30,
+      "residents": 70,
+      "secPerFloor": 1.8,
+      "doorTime": 2.5,
+      "hold": 2.0,
+      "boardTime": 0.6,
+      "elevators": [
+        {
+          "cap": 6,
+          "home": 1
+        },
+        {
+          "cap": 6,
+          "home": 4
+        }
+      ]
+    },
+    "slim-12": {
+      "note": "Under-provisioned mid-rise \u2014 a stress case",
+      "floorsAbove": 12,
+      "parking": 1,
+      "apartments": 110,
+      "residents": 240,
+      "secPerFloor": 1.6,
+      "doorTime": 2.5,
+      "hold": 2.0,
+      "boardTime": 0.6,
+      "elevators": [
+        {
+          "cap": 8,
+          "home": 1
+        },
+        {
+          "cap": 8,
+          "home": 7
+        }
+      ]
+    },
+    "mixed-fleet-24": {
+      "note": "Five cars with very different capacities",
+      "floorsAbove": 24,
+      "parking": 1,
+      "apartments": 340,
+      "residents": 720,
+      "secPerFloor": 1.3,
+      "doorTime": 2.0,
+      "hold": 2.0,
+      "boardTime": 0.5,
+      "elevators": [
+        {
+          "cap": 6,
+          "home": 1
+        },
+        {
+          "cap": 8,
+          "home": 1
+        },
+        {
+          "cap": 12,
+          "home": 9
+        },
+        {
+          "cap": 16,
+          "home": 15
+        },
+        {
+          "cap": 21,
+          "home": 1
+        }
+      ]
+    },
+    "busy-30": {
+      "note": "30 floors, three parking levels, six equal cars",
+      "floorsAbove": 30,
+      "parking": 3,
+      "apartments": 520,
+      "residents": 1100,
+      "secPerFloor": 1.2,
+      "doorTime": 2.0,
+      "hold": 2.0,
+      "boardTime": 0.5,
+      "elevators": [
+        {
+          "cap": 12,
+          "home": 1
+        },
+        {
+          "cap": 12,
+          "home": 1
+        },
+        {
+          "cap": 12,
+          "home": 8
+        },
+        {
+          "cap": 12,
+          "home": 15
+        },
+        {
+          "cap": 12,
+          "home": 22
+        },
+        {
+          "cap": 12,
+          "home": 28
+        }
+      ]
+    },
+    "tower-40": {
+      "note": "High-rise, eight fast cars",
+      "floorsAbove": 40,
+      "parking": 2,
+      "apartments": 760,
+      "residents": 1600,
+      "secPerFloor": 1.0,
+      "doorTime": 2.0,
+      "hold": 1.8,
+      "boardTime": 0.5,
+      "elevators": [
+        {
+          "cap": 16,
+          "home": 1
+        },
+        {
+          "cap": 16,
+          "home": 1
+        },
+        {
+          "cap": 13,
+          "home": 1
+        },
+        {
+          "cap": 13,
+          "home": 8
+        },
+        {
+          "cap": 16,
+          "home": 15
+        },
+        {
+          "cap": 13,
+          "home": 22
+        },
+        {
+          "cap": 16,
+          "home": 29
+        },
+        {
+          "cap": 13,
+          "home": 36
+        }
+      ]
+    }
+  },
+  "windows": {
+    "weekday-morning": {
+      "day": "weekday",
+      "start": "07:15",
+      "minutes": 45,
+      "regime": "morning"
+    },
+    "weekday-evening": {
+      "day": "weekday",
+      "start": "18:15",
+      "minutes": 45,
+      "regime": "evening"
+    },
+    "weekday-midday": {
+      "day": "weekday",
+      "start": "12:00",
+      "minutes": 45,
+      "regime": "offpeak"
+    },
+    "weekend": {
+      "day": "weekend",
+      "start": "11:00",
+      "minutes": 45,
+      "regime": "offpeak"
+    },
+    "weekday-morning-rush": {
+      "day": "weekday",
+      "start": "07:30",
+      "minutes": 30,
+      "regime": "morning",
+      "rateScale": 1.7
+    }
+  },
+  "traffic": {
+    "groups": true,
+    "surgesPerHour": 1.0,
+    "floorJitter": 0.35
+  },
+  "seeds": {
+    "test": [
+      1000,
+      1020
+    ],
+    "validation": [
+      2000,
+      2010
+    ]
+  }
+}
