@@ -1,10 +1,10 @@
 /* EN / BG strings — moved verbatim from legacy/v0.html, plus the engine-port additions. */
 const en = {
   title:'Elevator Dispatch — 3D Simulation',
-  h1:'<span class="tag">elevator group control</span>dispatch',
+  h1:'Elevator dispatch',
   hint:'drag = rotate<br>scroll = zoom',
   ticker_init:'Configure the building, then generate the simulation.',
-  btn_rot:'⟳ auto-rotate', btn_pause:'⏸ pause', btn_play:'▶ start', btn_reconf:'⚙ reconfigure',
+  btn_rot:'Auto-rotate', btn_pause:'Pause', btn_play:'Resume', btn_reconf:'Reconfigure',
   /* setup */
   setup_title:'Configure the building',
   setup_sub:'Set everything up, then generate the simulation and its dispatch algorithm. The defaults describe the real 230-apartment block we started from — change any field for a different building.',
@@ -31,7 +31,7 @@ const en = {
   tip_alg:'How each call is assigned. ETA v0 sends the car that will reach you fastest, weighing direction, stops and load. Learned is the same cost function with weights tuned by training (see Learning below). Naive just sends the nearest — turn it on to watch waits get worse.',
   tip_speed:'Fast-forwards the simulation clock only. The elevators still move at the configured seconds per floor.',
   tip_reset:'Clears the metric counters (not the cars) so you can compare algorithms from a clean start.',
-  btn_start:'▶ Generate & start', btn_defaults:'Restore defaults',
+  btn_start:'Run simulation', btn_defaults:'Restore defaults',
   rate_auto:(p:number)=>`Auto — design peak ≈ ${p} p/min`,
   elev_summary:(n:number,cs:string,tot:number)=>`${n} cars · ${cs} · ${tot} seats total`,
   w_apts:'apartments', w_res:'residents', w_levels:'levels', w_parking:'parking', w_cars:'cars', w_floor:'floor',
@@ -118,14 +118,21 @@ const en = {
   learn_start:'▶ Start learning', learn_pause:'⏸ Pause learning', learn_resume:'▶ Resume learning',
   learn_reset:'Reset', learn_export:'Export', learn_import:'Import',
   cap_learn_io:'Export downloads the champion as JSON; Import loads one (e.g. from the CLI trainer).',
+  /* product layout */
+  stage_h2:'Live building', tab_live:'Live', tab_learn:'Learning', tab_log:'Log',
+  kpi_p95:'Long waits (p95)', kpi_now_sub:'longest wait right now', kpi_rate:'Throughput',
+  kpi_vs:'vs ETA v0', kpi_baseline:'baseline', kpi_measuring:'measuring…',
+  kpi_rate_sub:(ph:number,dur:string)=>`≈${ph} per hour · over ${dur}`,
+  kpi_note_v0:'ETA v0 is the baseline. Switch to <b>Learned</b> or <b>Naive</b> to compare them live on exactly the same passengers.',
+  kpi_note_cmp:(m:string,n:number)=>`<b>${m}</b> compared with ETA v0 replaying the same passengers in the background · ${n} served`,
 };
 type Dict = typeof en;
 const bg: Dict = {
   title:'Диспечер на асансьори — 3D симулация',
-  h1:'<span class="tag">групово управление на асансьори</span>диспечер',
+  h1:'Диспечер на асансьори',
   hint:'влачене = завъртане<br>скрол = мащаб',
   ticker_init:'Конфигурирайте сградата, после генерирайте симулацията.',
-  btn_rot:'⟳ авторотация', btn_pause:'⏸ пауза', btn_play:'▶ старт', btn_reconf:'⚙ преконфигурирай',
+  btn_rot:'Авторотация', btn_pause:'Пауза', btn_play:'Продължи', btn_reconf:'Преконфигурирай',
   setup_title:'Конфигурирай сградата',
   setup_sub:'Настройте всичко, после генерирайте симулацията и нейния алгоритъм за разпределение. По подразбиране е реалният блок с 230 апартамента, от който тръгнахме — сменете което поле искате за друга сграда.',
   grp_structure:'Структура', grp_occ:'Обитаване', grp_phys:'Физика и време', grp_traffic:'Трафик', grp_elev:'Асансьори',
@@ -151,7 +158,7 @@ const bg: Dict = {
   tip_alg:'Как се възлага всяко повикване. ETA v0 праща кабината, която ще стигне най-бързо — гледа посока, спирки и заетост. Обучен е същата функция на цената с тегла, настроени чрез обучение (вижте „Обучение“ по-долу). Наивен праща най-близката — включете го, за да видите как чакането се влошава.',
   tip_speed:'Ускорява само часовника на симулацията. Асансьорите пак се движат със зададените секунди на етаж.',
   tip_reset:'Изчиства броячите на показателите (не кабините), за да сравнявате алгоритми от чист старт.',
-  btn_start:'▶ Генерирай и стартирай', btn_defaults:'Върни по подразбиране',
+  btn_start:'Стартирай симулацията', btn_defaults:'Върни по подразбиране',
   rate_auto:p=>`Автоматично — проектен пик ≈ ${p} п/мин`,
   elev_summary:(n,cs,tot)=>`${n} кабини · ${cs} · ${tot} места общо`,
   w_apts:'апартамента', w_res:'живущи', w_levels:'нива', w_parking:'паркинг', w_cars:'кабини', w_floor:'етаж',
@@ -235,6 +242,12 @@ const bg: Dict = {
   learn_start:'▶ Започни обучение', learn_pause:'⏸ Пауза на обучението', learn_resume:'▶ Продължи обучението',
   learn_reset:'Нулирай', learn_export:'Експорт', learn_import:'Импорт',
   cap_learn_io:'Експорт сваля шампиона като JSON; Импорт зарежда такъв (напр. от CLI обучението).',
+  stage_h2:'Сградата на живо', tab_live:'На живо', tab_learn:'Обучение', tab_log:'Дневник',
+  kpi_p95:'Дълги чакания (p95)', kpi_now_sub:'най-дългото чакане в момента', kpi_rate:'Пропускателна способност',
+  kpi_vs:'спрямо ETA v0', kpi_baseline:'базова линия', kpi_measuring:'измерва се…',
+  kpi_rate_sub:(ph,dur)=>`≈${ph} на час · за ${dur}`,
+  kpi_note_v0:'ETA v0 е базовата линия. Изберете <b>Обучен</b> или <b>Наивен</b>, за да ги сравните на живо с точно същите пътници.',
+  kpi_note_cmp:(m,n)=>`<b>${m}</b> спрямо ETA v0, който пуска същите пътници паралелно във фонов режим · ${n} обслужени`,
 };
 
 export type Lang = 'en' | 'bg';

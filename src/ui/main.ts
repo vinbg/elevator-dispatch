@@ -2,7 +2,8 @@
    onto the headless engine. All simulation state lives in `sim`; this file only renders and forwards input. */
 import { Sim, DT, type Policy } from '../sim/sim.ts';
 import type { HallCall, SimEvent } from '../sim/types.ts';
-import { mean } from '../sim/metrics.ts';
+import { mean, quantile } from '../sim/metrics.ts';
+import { Rng } from '../sim/rng.ts';
 import { EtaPolicy, V0, allRegimes } from '../policies/eta.ts';
 import { naive } from '../policies/naive.ts';
 import { learnedPolicy } from '../policies/learned.ts';
@@ -17,7 +18,10 @@ type Mode = 'naive' | 'v0' | 'learned';
 
 /* ═══════════════════════ STATE ═══════════════════════ */
 let sim: Sim | null = null, traffic: ConstantTraffic | null = null, unsub: (() => void) | null = null;
+// ETA v0 replaying exactly the same passengers (same seed, mirrored inputs) — the live baseline for the KPI deltas
+let shadow: Sim | null = null, shadowTraffic: ConstantTraffic | null = null;
 let speed = 2, paused = false, running = false, mode: Mode = 'v0', acc = 0;
+const uiRng = new Rng((Math.random() * 4294967296) >>> 0);   // manual-call destinations, kept off the sims' streams
 
 const lbl = (i: number) => lblFor(i, sim ? sim.lobby : cfg.parking);
 const policyFor = (m: Mode): Policy =>
@@ -33,7 +37,7 @@ function buildChips(s: Sim) {
   chipsHost.innerHTML = ''; chips = [];
   for (const car of s.cars) {
     const col = carColor(car.id);
-    const d = document.createElement('div'); d.className = 'carChip'; d.style.background = col;
+    const d = document.createElement('div'); d.className = 'carChip'; d.style.setProperty('--car', col);
     d.innerHTML = `<div class="nm"></div>
       <div class="fl">${lbl(car.home)}</div>
       <div class="st">• 0/${car.cap}</div>`;
@@ -54,17 +58,18 @@ function buildFloors(s: Sim) {
       <span class="who"></span>`;
     floorPanel.appendChild(r);
     const up = r.querySelector<HTMLButtonElement>('.up')!, dn = r.querySelector<HTMLButtonElement>('.dn')!, who = r.querySelector<HTMLElement>('.who')!;
-    if (canUp) up.onclick = () => { s.addPassenger(L, s.rng.int(L + 1, LEVELS - 1)); };
+    if (canUp) up.onclick = () => { call(L, uiRng.int(L + 1, LEVELS - 1)); };
     if (canDn) dn.onclick = () => {
-      let dest: number; const rr = s.rng.next();
-      if (L > LOBBY) dest = rr < 0.7 ? LOBBY : (LOBBY > 0 && rr < 0.88 ? s.rng.int(0, LOBBY - 1) : s.rng.int(LOBBY, L - 1));
+      let dest: number; const rr = uiRng.next();
+      if (L > LOBBY) dest = rr < 0.7 ? LOBBY : (LOBBY > 0 && rr < 0.88 ? uiRng.int(0, LOBBY - 1) : uiRng.int(LOBBY, L - 1));
       else dest = L - 1;
       if (dest >= L) dest = L - 1;
-      s.addPassenger(L, dest);
+      call(L, dest);
     };
     frows[L] = { up, dn, who };
   }
 }
+function call(o: number, d: number) { sim?.addPassenger(o, d); shadow?.addPassenger(o, d); }
 function setBtn(btn: HTMLButtonElement, call: HallCall | undefined) {
   if (btn.disabled) return;
   if (call && call.assigned >= 0) { btn.classList.add('active'); btn.style.background = carColor(call.assigned); }
@@ -92,17 +97,25 @@ function refreshFloors() {
 /* ═══════════════════════ LIVE CONTROLS ═══════════════════════ */
 segWire('algSeg', v => {
   mode = v === 'naive' || v === 'learned' ? v : 'v0';
-  if (!sim) return;
-  sim.setPolicy(policyFor(mode));
+  if (!sim || !traffic) return;
+  // restart both runs from an empty building so the KPI deltas compare like with like
+  startRun(traffic.ratePerMin, traffic.pattern, sim.parking);
+  applyLang(lang); refreshStats(); refreshFloors();
   logEv(t(mode === 'naive' ? 'ev_alg_naive' : mode === 'learned' ? 'ev_alg_learned' : 'ev_alg_smart'));
 });
 segWire('patSeg', v => {
   const p = v as Pattern;
   if (traffic) traffic.pattern = p;
+  if (shadowTraffic) shadowTraffic.pattern = p;
   learn.regime(patternRegime(p));
 });
 segWire('spdSeg', v => { speed = +v; });
 segWire('langSeg', v => applyLang(v));
+const PANES: Record<string, string> = { live: 'paneLive', learn: 'learnCard', log: 'paneLog' };
+segWire('tabSeg', v => {
+  for (const [k, id] of Object.entries(PANES)) $(id).hidden = k !== v;
+  if (v === 'learn') learn.draw();
+});
 const rateSl = $<HTMLInputElement>('rateSl'), rateV = $('rateV');
 const rate = () => traffic ? traffic.ratePerMin : 0;
 function rateZone() {
@@ -117,10 +130,17 @@ function syncRate() {
   rateV.textContent = rate() + ' ' + t('unit_pm');
   $('rateHint').innerHTML = t('rate_hint')(rateZone());
 }
-rateSl.oninput = () => { if (traffic) traffic.ratePerMin = +rateSl.value; syncRate(); };
+rateSl.oninput = () => {
+  if (traffic) traffic.ratePerMin = +rateSl.value;
+  if (shadowTraffic) shadowTraffic.ratePerMin = +rateSl.value;
+  syncRate();
+};
 const parkChk = $<HTMLInputElement>('parkChk');
-parkChk.onchange = () => { if (!sim) return; sim.parking = parkChk.checked; sim.cars.forEach(c => c.dirty = true); };
-$('resetBtn').onclick = () => { if (!sim) return; sim.resetMetrics(); logEv(t('ev_reset')); };
+parkChk.onchange = () => {
+  for (const s of [sim, shadow]) if (s) { s.parking = parkChk.checked; s.cars.forEach(c => c.dirty = true); }
+};
+function resetMetrics() { sim?.resetMetrics(); shadow?.resetMetrics(); }
+$('resetBtn').onclick = () => { if (!sim) return; resetMetrics(); logEv(t('ev_reset')); };
 const pauseBtn = $('pauseBtn');
 pauseBtn.onclick = () => { paused = !paused; pauseBtn.textContent = paused ? t('btn_play') : t('btn_pause'); pauseBtn.classList.toggle('on', paused); };
 $('cfgBtn').onclick = () => reconfigure();
@@ -154,21 +174,37 @@ function onEvent(ev: SimEvent) {
 }
 
 /* stats */
+const secs = (v: number) => v.toFixed(1) + '<span class="u">s</span>';
+/** live delta vs the shadow ETA v0 run; lower is better for every KPI that has one.
+    Hidden until both runs have `min` samples — single live runs are noisy, tails especially. */
+function delta(cur: number, base: number, n: number, nb: number, min = 100) {
+  if (mode === 'v0') return `<span class="delta flat">${t('kpi_baseline')}</span>`;
+  if (n < min || nb < min || !(base > 0)) return t('kpi_measuring');
+  const pct = (cur - base) / base * 100;
+  const cls = Math.abs(pct) < 1 ? 'flat' : pct < 0 ? 'good' : 'bad';
+  return `<span class="delta ${cls}">${pct < 0 ? '−' : '+'}${Math.abs(pct).toFixed(0)}%</span> ${t('kpi_vs')}`;
+}
 function refreshStats() {
   if (!sim) return;
-  const m = sim.metrics, now = sim.t;
-  $('sWait').innerHTML = m.waits.length ? mean(m.waits).toFixed(1) + '<span class="u"> s</span>' : '—';
-  $('sTrip').innerHTML = m.trips.length ? mean(m.trips).toFixed(1) + '<span class="u"> s</span>' : '—';
+  const m = sim.metrics, now = sim.t, b = shadow?.metrics;
+  const nw = m.waits.length, nbw = b ? b.waits.length : 0;
+  $('sWait').innerHTML = nw ? secs(mean(m.waits)) : '—';
+  $('sP95').innerHTML = nw ? secs(quantile(m.waits, 0.95)) : '—';
+  $('sTrip').innerHTML = m.trips.length ? secs(mean(m.trips)) : '—';
+  $('dWait').innerHTML = b ? delta(mean(m.waits), mean(b.waits), nw, nbw) : '';
+  $('dP95').innerHTML = b ? delta(quantile(m.waits, 0.95), quantile(b.waits, 0.95), nw, nbw, 200) : '';
+  $('dTrip').innerHTML = b ? delta(mean(m.trips), mean(b.trips), m.trips.length, b.trips.length) : '';
   let mx = 0;
   for (const h of sim.hallCalls) for (const p of h.pax) mx = Math.max(mx, now - p.t0);
-  $('sMax').innerHTML = sim.hallCalls.length ? mx.toFixed(1) + '<span class="u"> s</span>' : '—';
-  $('sServed').textContent = String(m.served);
+  $('sMax').innerHTML = sim.hallCalls.length ? secs(mx) : '—';
   const dur = now - m.t0;
   if (dur > 10 && m.served > 0) {
     const pm = m.served / dur * 60;
-    $('sRate').innerHTML = pm.toFixed(1) + `<span class="u"> ${t('unit_pm')}</span>`;
-    $('sRateL').textContent = t('stat_rate')(Math.round(pm * 60), fmtT(dur));
-  } else { $('sRate').innerHTML = '—'; $('sRateL').textContent = t('stat_rate_wait'); }
+    $('sRate').innerHTML = pm.toFixed(1) + `<span class="u">${t('unit_pm')}</span>`;
+    $('sRateL').textContent = t('kpi_rate_sub')(Math.round(pm * 60), fmtT(dur));
+  } else { $('sRate').innerHTML = '—'; $('sRateL').textContent = t('kpi_measuring'); }
+  $('kpiNote').innerHTML = mode === 'v0' ? t('kpi_note_v0')
+    : t('kpi_note_cmp')(t(mode === 'naive' ? 'alg_naive' : 'alg_learned'), m.served);
 }
 
 /* ═══════════════════════ LANG ═══════════════════════ */
@@ -194,30 +230,41 @@ function applyLang(l: string) {
 }
 
 /* ═══════════════════════ GENERATE / VIEWS ═══════════════════════ */
-function generate() {
-  const b = buildingOf(cfg);
-  const levels = b.parking + b.floorsAbove;
-  mode = 'v0'; speed = 2; paused = false; acc = 0; scene.resetZoom();
-  traffic = new ConstantTraffic(cfg.rateAuto ? designPeak() : cfg.rate, cfg.pattern, b.parking, levels);
+/** start a fresh run of the selected dispatcher next to its ETA v0 shadow, both from the same seed and empty building */
+function startRun(rate: number, pattern: Pattern, parking: boolean) {
+  const b = buildingOf(cfg), levels = b.parking + b.floorsAbove;
+  acc = 0;
+  traffic = new ConstantTraffic(rate, pattern, b.parking, levels);
+  shadowTraffic = new ConstantTraffic(rate, pattern, b.parking, levels);
   unsub?.();
-  sim = new Sim(b, { policy: policyFor(mode), seed: (Math.random() * 4294967296) >>> 0, traffic, metricsWindow: 400, parking: cfg.parkingEnabled });
+  const seed = (Math.random() * 4294967296) >>> 0;
+  sim = new Sim(b, { policy: policyFor(mode), seed, traffic, metricsWindow: 400, parking });
+  shadow = new Sim(b, { policy: policyFor('v0'), seed, traffic: shadowTraffic, metricsWindow: 400, parking });
   unsub = sim.on(onEvent);
   scene.buildScene(sim); buildChips(sim); buildFloors(sim);
+  for (let k = 0; k < Math.min(6, Math.max(3, Math.round(sim.cars.length * 1.2))); k++) { traffic.spawn(sim); shadowTraffic.spawn(shadow); }
+  lastVer = -1;
+}
+function generate() {
+  mode = 'v0'; speed = 2; paused = false; scene.resetZoom();
+  startRun(cfg.rateAuto ? designPeak() : cfg.rate, cfg.pattern, cfg.parkingEnabled);
   logHost.innerHTML = `<div class="e"><span class="t">0:00</span><span>${t('log_init')}</span></div>`;
   // live controls reflect config
   setSeg('algSeg', 'v0'); setSeg('patSeg', cfg.pattern); setSeg('spdSeg', '2');
   parkChk.checked = cfg.parkingEnabled;
   rateSl.max = String(Math.max(20, designPeak() * 4));
-  rateSl.value = String(traffic.ratePerMin);
+  rateSl.value = String(traffic!.ratePerMin);
   pauseBtn.classList.remove('on'); pauseBtn.textContent = t('btn_pause');
   applyLang(lang);
-  logEv(t('ev_gen')(cfg.floorsAbove, cfg.parking, sim.cars.length));
-  lastVer = -1; refreshStats(); refreshFloors();
-  for (let k = 0; k < Math.min(6, Math.max(3, Math.round(sim.cars.length * 1.2))); k++) traffic.spawn(sim);
+  logEv(t('ev_gen')(cfg.floorsAbove, cfg.parking, sim!.cars.length));
+  refreshStats(); refreshFloors();
   learn.rebuild();
 }
-function enterApp() { $('setup').hidden = true; $('app').hidden = false; running = true; paused = false; scene.computeFit(); learn.draw(); }
-function reconfigure() { running = false; $('app').hidden = true; $('setup').hidden = false; renderSetup(); }
+function enterApp() {
+  $('setup').hidden = true; $('app').hidden = false; $('modeWrap').hidden = false;
+  running = true; paused = false; scene.computeFit(); learn.draw(); scrollTo(0, 0);
+}
+function reconfigure() { running = false; $('app').hidden = true; $('modeWrap').hidden = true; $('setup').hidden = false; renderSetup(); }
 
 /* ═══════════════════════ LOOP ═══════════════════════ */
 let lastT = performance.now(), statT = 0, lastVer = -1;
@@ -226,7 +273,7 @@ function frame(now: number) {
   if (running && sim) {
     if (!paused) {
       const dt = dtReal * speed;
-      sim.advance(dt);
+      sim.advance(dt); shadow?.advance(dt);
       acc += dt; while (acc >= DT - 1e-9) acc -= DT;   // mirrors Sim.advance's carry-over
     }
     scene.render(sim, dtReal, acc);
