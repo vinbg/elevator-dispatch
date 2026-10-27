@@ -82,7 +82,7 @@ function renderElevRows() {
   host.innerHTML = '';
   cfg.elevators.forEach((e, i) => {
     const row = document.createElement('div'); row.className = 'erow';
-    row.innerHTML = `<div class="tagn" style="color:${carColor(i)}">${String.fromCharCode(65 + i)}</div>
+    row.innerHTML = `<div class="tagn" style="background:${carColor(i)}">${String.fromCharCode(65 + i)}</div>
       <input type="number" min="2" max="30" step="1" value="${e.cap}" data-i="${i}" data-k="cap">
       <select data-i="${i}" data-k="home">${homeOptions(e.home)}</select>`;
     host.appendChild(row);

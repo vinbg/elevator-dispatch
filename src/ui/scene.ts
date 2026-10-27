@@ -69,7 +69,6 @@ export function buildScene(sim: Sim) {
     face(o, CD, CH, `rotateY(90deg) translateZ(${CW / 2}px)`, 'carFace carSide').style.background = col;
     face(o, CD, CH, `rotateY(-90deg) translateZ(${CW / 2}px)`, 'carFace carSide').style.background = col;
     face(o, CW, CD, `rotateX(90deg) translateZ(${CH / 2}px)`, 'carFace carTop').style.background = col;
-    o.style.filter = `drop-shadow(0 0 8px ${col}55)`;
     views.push({ el: o, occ, CH });
   }
   computeFit();

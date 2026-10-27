@@ -1,7 +1,7 @@
 /* EN / BG strings — moved verbatim from legacy/v0.html, plus the engine-port additions. */
 const en = {
   title:'Elevator Dispatch — 3D Simulation',
-  h1:'Dispatch <span class="tag">/ elevator group control</span>',
+  h1:'<span class="tag">elevator group control</span>dispatch',
   hint:'drag = rotate<br>scroll = zoom',
   ticker_init:'Configure the building, then generate the simulation.',
   btn_rot:'⟳ auto-rotate', btn_pause:'⏸ pause', btn_play:'▶ start', btn_reconf:'⚙ reconfigure',
@@ -122,7 +122,7 @@ const en = {
 type Dict = typeof en;
 const bg: Dict = {
   title:'Диспечер на асансьори — 3D симулация',
-  h1:'Диспечер <span class="tag">/ групово управление на асансьори</span>',
+  h1:'<span class="tag">групово управление на асансьори</span>диспечер',
   hint:'влачене = завъртане<br>скрол = мащаб',
   ticker_init:'Конфигурирайте сградата, после генерирайте симулацията.',
   btn_rot:'⟳ авторотация', btn_pause:'⏸ пауза', btn_play:'▶ старт', btn_reconf:'⚙ преконфигурирай',

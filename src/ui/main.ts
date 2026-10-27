@@ -33,9 +33,9 @@ function buildChips(s: Sim) {
   chipsHost.innerHTML = ''; chips = [];
   for (const car of s.cars) {
     const col = carColor(car.id);
-    const d = document.createElement('div'); d.className = 'carChip';
-    d.innerHTML = `<div class="nm" style="color:${col}"></div>
-      <div class="fl" style="color:${col}">${lbl(car.home)}</div>
+    const d = document.createElement('div'); d.className = 'carChip'; d.style.background = col;
+    d.innerHTML = `<div class="nm"></div>
+      <div class="fl">${lbl(car.home)}</div>
       <div class="st">• 0/${car.cap}</div>`;
     chipsHost.appendChild(d);
     chips.push({ nm: d.querySelector('.nm')!, fl: d.querySelector('.fl')!, st: d.querySelector('.st')! });
@@ -67,8 +67,8 @@ function buildFloors(s: Sim) {
 }
 function setBtn(btn: HTMLButtonElement, call: HallCall | undefined) {
   if (btn.disabled) return;
-  if (call && call.assigned >= 0) { btn.classList.add('active'); btn.style.color = carColor(call.assigned); }
-  else { btn.classList.remove('active'); btn.style.color = ''; }
+  if (call && call.assigned >= 0) { btn.classList.add('active'); btn.style.background = carColor(call.assigned); }
+  else { btn.classList.remove('active'); btn.style.background = ''; }
 }
 function setLant(span: HTMLElement, call: HallCall | undefined) {
   if (call && call.assigned >= 0) { span.classList.add('on'); span.style.color = carColor(call.assigned); }
@@ -128,7 +128,7 @@ $('cfgBtn').onclick = () => reconfigure();
 /* ticker + log */
 const tickerEl = $('ticker');
 const logHost = $('log');
-const carTag = (id: number) => `<b class="cn" style="color:${carColor(id)}">${sim ? sim.cars[id].name : ''}</b>`;
+const carTag = (id: number) => `<b class="cn" style="background:${carColor(id)}">${sim ? sim.cars[id].name : ''}</b>`;
 function logEv(html: string, at = sim ? sim.t : 0) {
   const e = document.createElement('div'); e.className = 'e';
   e.innerHTML = `<span class="t">${fmtT(at)}</span><span>${html}</span>`;

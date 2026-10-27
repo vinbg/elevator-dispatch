@@ -2,8 +2,9 @@
 export const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 export const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 
-const PALETTE = ['#FF6E5E', '#53C7F0', '#7ED491', '#C792EA', '#FFB454', '#F06595', '#63E6BE', '#A0C4FF'];
-export const carColor = (i: number) => i < PALETTE.length ? PALETTE[i] : `hsl(${Math.round((i * 47) % 360)} 72% 64%)`;
+// Metro tile colours: cyan, orange, green, magenta, indigo, teal, amber, cobalt
+const PALETTE = ['#1BA1E2', '#FA6800', '#60A917', '#D80073', '#6A00FF', '#00ABA9', '#F0A30A', '#0050EF'];
+export const carColor = (i: number) => i < PALETTE.length ? PALETTE[i] : `hsl(${Math.round((i * 47) % 360)} 80% 42%)`;
 
 export const lblFor = (i: number, lob: number) => i < lob ? '−' + (lob - i) : String(i - lob + 1);
 export const signedFor = (i: number, lob: number) => i < lob ? (i - lob) : (i - lob + 1);
