@@ -76,6 +76,7 @@
   .btn.ghost:hover,.btn.ghost.on{background:#f2f4f7;color:var(--text)}
   .btnrow{display:flex;gap:8px}
   .btnrow .btn{flex:1}
+  .btn{white-space:nowrap}
 
   input[type=number],select{background:var(--surface);border:1px solid var(--border-strong);border-radius:var(--radius-sm);font-size:13px;padding:6px 9px;font-variant-numeric:tabular-nums;box-shadow:var(--shadow)}
   input[type=number]{width:88px;text-align:right}
@@ -161,11 +162,9 @@
   .carTop{filter:brightness(1.08)}
   .carFront{overflow:hidden;display:flex;align-items:stretch;justify-content:space-between}
   .carFront .occ{position:absolute;top:2px;left:0;right:0;text-align:center;font:600 9px/1 var(--font);color:#fff;z-index:3}
-  .door{position:absolute;top:0;bottom:0;width:50%;background:rgba(16,24,40,.28);transition:transform .5s ease;z-index:2}
+  .door{position:absolute;top:0;bottom:0;width:50%;background:rgba(16,24,40,.28);z-index:2}
   .doorL{left:0;border-right:1px solid rgba(255,255,255,.5)}
   .doorR{right:0;border-left:1px solid rgba(255,255,255,.5)}
-  .car.open .doorL{transform:translateX(-92%)}
-  .car.open .doorR{transform:translateX(92%)}
   .flabel{font:500 9px/1 var(--font);color:#98a2b3;text-align:right;width:26px}
   .lant{display:flex;flex-direction:column;gap:1px;align-items:center;width:14px}
   .lant span{font:700 8px/1 var(--font);color:transparent;transition:color .2s}
@@ -217,7 +216,38 @@
   .dot{width:8px;height:8px;border-radius:2px;background:currentColor}
   .frow .n{font-size:11.5px;color:var(--muted);margin-right:4px;font-variant-numeric:tabular-nums}
 
-  .spark{display:block;width:100%;height:64px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm)}
+  /* learning view */
+  .pill{border:1px solid #c7d2fe;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+  .pill::before{content:'';width:7px;height:7px;border-radius:50%;background:currentColor;animation:pulse 1.6s ease-in-out infinite}
+  .pill.paused::before{animation:none;opacity:.5}
+  @keyframes pulse{50%{opacity:.25}}
+  .status{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;border-radius:999px;padding:2px 10px;background:#f2f4f7;color:var(--muted)}
+  .status.running{background:var(--accent-soft);color:var(--accent)}
+  .status.error{background:var(--bad-soft);color:var(--bad)}
+  .lstats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .lstats>div{border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;min-width:0}
+  .lstats .l{font-size:11.5px;color:var(--muted);line-height:1.3;min-height:30px}
+  .lstats .v{font-size:18px;font-weight:600;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+  .lstats .v.good{color:var(--good)} .lstats .v.bad{color:var(--bad)}
+  .lstats .v small{font-size:11.5px;font-weight:500;color:var(--muted);margin-left:2px}
+  .chart{display:block;width:100%;height:160px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)}
+  .params{display:flex;flex-direction:column;gap:9px;margin-top:8px}
+  .prow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;font-size:12.5px;align-items:baseline}
+  .prow .pn{color:var(--text-2)}
+  .prow .pv{font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
+  .prow .pv b{color:var(--text);font-weight:600}
+  .prow .track{grid-column:1 / -1;position:relative;height:6px;border-radius:3px;background:#f2f4f7}
+  .prow .bar{position:absolute;top:0;bottom:0;border-radius:3px;background:#c7d2fe}
+  .prow .mk{position:absolute;top:-3px;width:2px;height:12px;border-radius:1px;transform:translateX(-1px)}
+  .prow .mk.v0{background:#98a2b3}
+  .prow .mk.now{background:var(--accent);transition:left .4s ease}
+  .insights{margin:10px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+  .insights li{font-size:12.5px;color:var(--text-2);background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 10px}
+  .ms{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--text-2)}
+  .ms li{display:flex;align-items:center;gap:8px}
+  .ms li::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--good);flex:0 0 auto}
+  .ms li.none{color:var(--muted)} .ms li.none::before{background:var(--border-strong)}
+  .ms li.start{color:var(--muted)} .ms li.start::before{background:var(--accent)}
 
   /* log */
   .log{max-height:560px;overflow-y:auto;font-size:12.5px;line-height:1.6;color:var(--text-2)}
@@ -242,6 +272,8 @@
         <div class="spec" id="spec"></div>
       </div>
     </div>
+    <button class="pill" id="learnPill" hidden></button>
+    <button class="btn" id="editBtn" hidden data-t="btn_edit_building"></button>
     <div class="modeWrap" id="modeWrap" hidden>
       <span class="lab" data-t="lbl_alg"></span>
       <div class="seg" id="algSeg">
@@ -287,7 +319,7 @@
         <h3 data-t="grp_phys"></h3>
         <div class="fbody">
           <label class="field"><span class="lbl"><span data-t="f_spf"></span><i class="tip" tabindex="0" data-tip="tip_spf"></i></span><input type="number" id="cfgSpf" min="0.3" max="6" step="0.1"></label>
-          <label class="field"><span class="lbl"><span data-t="f_door"></span><i class="tip" tabindex="0" data-tip="tip_door"></i></span><input type="number" id="cfgDoor" min="0" max="12" step="0.5"></label>
+          <label class="field"><span class="lbl"><span data-t="f_door"></span><i class="tip" tabindex="0" data-tip="tip_door"></i></span><input type="number" id="cfgDoor" min="0" max="20" step="0.5"></label>
           <label class="field"><span class="lbl"><span data-t="f_hold"></span><i class="tip" tabindex="0" data-tip="tip_hold"></i></span><input type="number" id="cfgHold" min="0.5" max="12" step="0.5"></label>
           <label class="field"><span class="lbl"><span data-t="f_board"></span><i class="tip" tabindex="0" data-tip="tip_board"></i></span><input type="number" id="cfgBoard" min="0" max="3" step="0.1"></label>
         </div>
@@ -321,6 +353,7 @@
       </div>
     </div>
     <div class="setupActions">
+      <button class="btn" id="backBtn" hidden data-t="btn_back_sim"></button>
       <button class="btn" id="defaultsBtn" data-t="btn_defaults"></button>
       <button class="btn start" id="startBtn" data-t="btn_start"></button>
     </div>
@@ -422,17 +455,29 @@
 
         <!-- Learning -->
         <div class="pane ctl" id="learnCard" hidden>
-          <p class="cap" data-th="learn_cap"></p>
-          <div class="row"><span class="rowlbl"><label data-t="learn_lbl"></label><i class="tip" tabindex="0" data-tip="tip_learn"></i></span>
-            <span class="val" id="learnState"></span>
+          <div class="row">
+            <span class="rowlbl"><span class="status" id="learnState"></span><i class="tip" tabindex="0" data-tip="tip_learn"></i></span>
+            <span class="btnrow"><button class="btn primary" id="learnBtn"></button><button class="btn" id="learnResetBtn" data-t="learn_reset"></button></span>
           </div>
           <p class="cap" id="learnStatus"></p>
-          <canvas class="spark" id="learnCurve"></canvas>
-          <p class="cap" id="learnGen"></p>
-          <div class="btnrow">
-            <button class="btn primary" id="learnBtn"></button>
-            <button class="btn" id="learnResetBtn" data-t="learn_reset"></button>
+          <div class="lstats">
+            <div><div class="l" data-t="learn_k_champ"></div><div class="v" id="lChamp">—</div></div>
+            <div><div class="l" data-t="learn_k_gen"></div><div class="v" id="lGen">0</div></div>
+            <div><div class="l" data-t="learn_k_hours"></div><div class="v" id="lHours">—</div></div>
           </div>
+          <canvas class="chart" id="learnCurve"></canvas>
+          <p class="cap" data-t="learn_chart_cap"></p>
+          <div>
+            <p class="secTitle" data-t="learn_what_h"></p>
+            <p class="cap" id="lWhatSrc"></p>
+            <div class="params" id="lParams"></div>
+            <ul class="insights" id="lInsights"></ul>
+          </div>
+          <div>
+            <p class="secTitle" data-t="learn_ms_h"></p>
+            <ol class="ms" id="lMilestones"></ol>
+          </div>
+          <p class="cap" data-th="learn_cap"></p>
           <div class="btnrow">
             <button class="btn" id="learnExportBtn" data-t="learn_export"></button>
             <button class="btn" id="learnImportBtn" data-t="learn_import"></button>

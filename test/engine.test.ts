@@ -116,3 +116,20 @@ describe('liveness (regression: legacy door-reopen freeze)', () => {
     }
   });
 });
+
+describe('door animation timing', async () => {
+  // scene.ts touches the DOM at import; give it the few elements it looks up
+  const { JSDOM } = await import('jsdom');
+  const dom = new JSDOM('<div id="world"></div><div id="zoomEl"></div><div id="stage"></div><button id="rotBtn"></button>');
+  Object.assign(globalThis, { document: dom.window.document, matchMedia: () => ({ matches: false }) });
+  const { doorOpenness } = await import('../src/ui/scene.ts');
+  it('opens over 5 s, holds, closes over 5 s with the 10 s default', () => {
+    const start = 12;   // 10 s doors + 2 s hold
+    expect(doorOpenness(start, 12, 10)).toBe(0);
+    expect(doorOpenness(start, 9.5, 10)).toBeCloseTo(0.5);
+    expect(doorOpenness(start, 7, 10)).toBe(1);
+    expect(doorOpenness(start, 5, 10)).toBe(1);
+    expect(doorOpenness(start, 2.5, 10)).toBeCloseTo(0.5);
+    expect(doorOpenness(start, 0, 10)).toBe(0);
+  });
+});

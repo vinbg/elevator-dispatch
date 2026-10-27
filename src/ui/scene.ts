@@ -9,7 +9,7 @@ const world = $('world');
 const zoomEl = $('zoomEl');
 const stage = $('stage');
 
-interface CarView { el: HTMLElement; occ: HTMLElement; CH: number }
+interface CarView { el: HTMLElement; occ: HTMLElement; CH: number; dl: HTMLElement; dr: HTMLElement; doorT: number }   // doorT = doorLeft when the stop began
 export const lanterns: { up: HTMLSpanElement; dn: HTMLSpanElement }[] = [];
 const views: CarView[] = [];
 
@@ -69,7 +69,7 @@ export function buildScene(sim: Sim) {
     face(o, CD, CH, `rotateY(90deg) translateZ(${CW / 2}px)`, 'carFace carSide').style.background = col;
     face(o, CD, CH, `rotateY(-90deg) translateZ(${CW / 2}px)`, 'carFace carSide').style.background = col;
     face(o, CW, CD, `rotateX(90deg) translateZ(${CH / 2}px)`, 'carFace carTop').style.background = col;
-    views.push({ el: o, occ, CH });
+    views.push({ el: o, occ, CH, dl, dr, doorT: 0 });
   }
   computeFit();
 }
@@ -97,6 +97,13 @@ export function initCamera() {
   rotBtn.onclick = () => { autorot = !autorot; syncRot(); }; syncRot();
 }
 
+/** How open the doors are (0–1) at a stop that began with `start` seconds of dwell and has `left` remaining:
+    they open over the first half of `doorTime`, stay open, and close over the last half — all in sim time. */
+export function doorOpenness(start: number, left: number, doorTime: number): number {
+  const half = doorTime / 2;
+  return half > 0 ? Math.max(0, Math.min(1, (start - left) / half, left / half)) : 1;
+}
+
 /** `lead` = sim seconds accumulated but not yet stepped (smooths motion between fixed DT ticks) */
 export function render(sim: Sim, dtReal: number, lead: number) {
   if (autorot && !drag) ry += dtReal * 3.5;
@@ -110,7 +117,13 @@ export function render(sim: Sim, dtReal: number, lead: number) {
       pos = c.dir > 0 ? Math.min(p, c.target) : Math.max(p, c.target);
     }
     v.el.style.transform = `translate3d(${shaftX(c.id)}px,${yOfLine(pos) - v.CH / 2 - 1}px,0)`;
-    v.el.classList.toggle('open', c.phase === 'doors' && c.doorLeft > 0.6);
+    let open = 0;
+    if (c.phase === 'doors') {
+      if (c.doorLeft > v.doorT) v.doorT = c.doorLeft;   // a new stop began
+      open = doorOpenness(v.doorT, Math.max(0, c.doorLeft - lead), sim.cfg.doorTime);
+    } else v.doorT = 0;
+    const tx = (92 * open).toFixed(1);
+    v.dl.style.transform = `translateX(-${tx}%)`; v.dr.style.transform = `translateX(${tx}%)`;
     const occ = String(c.pax.length);
     if (v.occ.textContent !== occ) v.occ.textContent = occ;
   }

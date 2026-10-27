@@ -261,10 +261,23 @@ function generate() {
   learn.rebuild();
 }
 function enterApp() {
-  $('setup').hidden = true; $('app').hidden = false; $('modeWrap').hidden = false;
-  running = true; paused = false; scene.computeFit(); learn.draw(); scrollTo(0, 0);
+  $('setup').hidden = true; $('app').hidden = false; $('modeWrap').hidden = false; $('editBtn').hidden = false;
+  running = true; paused = false; pauseBtn.classList.remove('on'); pauseBtn.textContent = t('btn_pause');
+  scene.computeFit(); learn.draw(); scrollTo(0, 0);
 }
-function reconfigure() { running = false; $('app').hidden = true; $('modeWrap').hidden = true; $('setup').hidden = false; renderSetup(); }
+/** back to the building form; the current run is kept so "Back to simulation" can resume it */
+function reconfigure() {
+  running = false;
+  $('app').hidden = true; $('modeWrap').hidden = true; $('editBtn').hidden = true;
+  $('setup').hidden = false; $('backBtn').hidden = !sim;
+  renderSetup(); scrollTo(0, 0);
+}
+$('editBtn').onclick = () => reconfigure();
+$('backBtn').onclick = () => { if (sim) enterApp(); };
+$('learnPill').onclick = () => {
+  if (!running && sim) enterApp();
+  $('tabSeg').querySelector<HTMLButtonElement>('[data-v=learn]')?.click();
+};
 
 /* ═══════════════════════ LOOP ═══════════════════════ */
 let lastT = performance.now(), statT = 0, lastVer = -1;

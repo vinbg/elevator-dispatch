@@ -14,7 +14,7 @@ export interface UiCfg {
 export const MAX_CARS = 16;
 export const DEFAULT_CFG: UiCfg = {
   floorsAbove: 17, parking: 1, apartments: 230, residents: 460,
-  secPerFloor: 1.5, doorTime: 2.0, hold: 2.0, boardTime: 0.5, parkingEnabled: true,
+  secPerFloor: 1.5, doorTime: 10, hold: 2.0, boardTime: 0.5, parkingEnabled: true,   // doors: 5 s open + 5 s close
   pattern: 'mixed', rateAuto: false, rate: 5,
   elevators: [{ cap: 8, home: 1 }, { cap: 12, home: 1 }, { cap: 12, home: 9 }, { cap: 8, home: 14 }],
 };
@@ -29,6 +29,7 @@ function loadCfg(): UiCfg {
         const m: UiCfg & { dwell?: number } = { ...clone(DEFAULT_CFG), ...c };
         if (c.doorTime == null && c.dwell != null) { m.doorTime = Math.max(0, c.dwell - 1.5); m.hold = 1.5; }  // migrate old single dwell
         delete m.dwell;
+        if (c.doorTime === 2) m.doorTime = DEFAULT_CFG.doorTime;   // the old 2 s default was unrealistically fast
         return m;
       }
     }
@@ -131,7 +132,7 @@ export function initSetup(onStart: () => void) {
   bind('cfgApts', () => { cfg.apartments = clamp(Math.round(num('cfgApts') || 1), 1, 5000); setVal('cfgApts', cfg.apartments); syncSpec(); });
   bind('cfgRes', () => { cfg.residents = clamp(Math.round(num('cfgRes') || 1), 1, 20000); setVal('cfgRes', cfg.residents); $('rateAutoLbl').textContent = t('rate_auto')(designPeak()); syncSpec(); });
   bind('cfgSpf', () => { cfg.secPerFloor = clamp(num('cfgSpf') || 1.5, 0.3, 6); setVal('cfgSpf', cfg.secPerFloor); syncSpec(); });
-  bind('cfgDoor', () => { cfg.doorTime = clamp(num('cfgDoor') || 0, 0, 12); setVal('cfgDoor', cfg.doorTime); });
+  bind('cfgDoor', () => { cfg.doorTime = clamp(num('cfgDoor') || 0, 0, 20); setVal('cfgDoor', cfg.doorTime); });
   bind('cfgHold', () => { cfg.hold = clamp(num('cfgHold') || 1.5, 0.5, 12); setVal('cfgHold', cfg.hold); });
   bind('cfgBoard', () => { const v = num('cfgBoard'); cfg.boardTime = clamp(Number.isFinite(v) ? v : DEFAULT_CFG.boardTime, 0, 3); setVal('cfgBoard', cfg.boardTime); });
   bind('cfgCount', () => { syncElevCount(num('cfgCount')); setVal('cfgCount', cfg.elevators.length); renderElevRows(); syncSpec(); });
